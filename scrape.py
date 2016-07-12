@@ -47,12 +47,11 @@ class Game(object):
         """
         Helper function for retrieving tracking data
         """
+        # Extract Data into /temp folder
         datalink = "https://raw.githubusercontent.com/neilmj/BasketballData/master/2016.NBA.Raw.SportVU.Game.Logs/{self.tracking_id}.7z".format(self=self)
-        # Extract Data into /data
-
-        print (datalink)
         os.system("curl " + datalink + " -o " + os.getcwd() + '/temp/zipdata') 
         os.system("7za -o./temp x " + os.getcwd() + '/temp/zipdata') 
+        os.remove("./temp/zipdata")
         
         # Extract game ID from extracted file name.
         for file in os.listdir('./temp'):
@@ -60,10 +59,9 @@ class Game(object):
                 self.game_id = file[:-5]
         
         # Load tracking data
-        print('asdf')
         with open('temp/{self.game_id}.json'.format(self=self)) as data_file:
             self.tracking_data = json.load(data_file) # Load this json
-        print('sdfg')
+        os.remove('./temp/{self.game_id}.json'.format(self=self))
         
         
     def _get_playbyplay_data(self):
@@ -81,11 +79,11 @@ class Game(object):
             'StartRange=0" > {cwd}/temp/pbp_{self.game_id}.json'.format(cwd=os.getcwd(), self=self))
         with open("{cwd}/temp/pbp_{self.game_id}.json".format(cwd=os.getcwd(), self=self)) as json_file:
             parsed = json.load(json_file)['resultSets'][0]
+        os.remove("{cwd}/temp/pbp_{self.game_id}.json".format(cwd=os.getcwd(), self=self))
         self.pbp = pd.DataFrame(parsed['rowSet'])
         self.pbp.columns= parsed['headers']
         return self
 
-# Using http://opiateforthemass.es/articles/animate-nba-shot-events/ for help
 a = Game('01.13.2016', 'DEN', 'GSW')             
 
 
