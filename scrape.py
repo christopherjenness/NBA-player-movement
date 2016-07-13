@@ -9,6 +9,7 @@ import json
 import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib.patches import Circle, Rectangle, Arc
+import numpy as np
 
 os.chdir('/Users/christopherjenness/Desktop/Personal/SportVU/NBA-player-movement')
 os.system('mkdir temp')
@@ -114,7 +115,8 @@ class Game(object):
                 moments.append(inner_row)
         moments = pd.DataFrame(moments)
         moments = moments.drop_duplicates(subset=[1])
-        moments.columns = ['quarter', 'universe_time', 'quarter_time', 'shot_clock', 'unknown', 'positions']
+        moments = moments.reset_index()
+        moments.columns = ['index', 'quarter', 'universe_time', 'quarter_time', 'shot_clock', 'unknown', 'positions']
         moments['game_time'] = (moments.quarter - 1) * 720 + (720 - moments.quarter_time)
         self.moments = moments
 
@@ -208,34 +210,47 @@ class Game(object):
         ending_frame = self.moments[self.moments.game_time.round() == game_time + length].index.values[0]
         
         for frame in range(starting_frame, ending_frame):
-            break
+            self.plot_frame(frame)
+        command = 'ffmpeg -framerate 20 -start_number {starting_frame} -i %d.jpeg -c:v libx264 -r 30 -pix_fmt yuv420p out.mp4'.format(starting_frame=starting_frame)
+        os.system(command)  
+        
+        #Delete images
+        for file in os.listdir('./temp'):
+            if file.endswith('.jpeg'):
+                os.remove('./temp/{file}'.formage(file=file)
+
         return self
         
     def plot_frame(self, frame_number):
         """
         """
         plt.figure(figsize=(12,6))
-        draw_court()
+        self._draw_court()
         x_pos = []
         y_pos = []
         colors = []
         sizes = []
-        for player in self.moments.ix[0].positions:
+        for player in self.moments.ix[frame_number].positions:
             x_pos.append(player[2])
             y_pos.append(player[3])
             colors.append(self.team_colors[player[0]])
             # Use ball height for size (useful to see a shot)
-            if player[0]==0:
-                sizes.append(300/player[4])
+            if player[0]==-1:
+                sizes.append(max(150 - 2*(player[4]-5)**2, 10))
             else:
-                sizes.append(75)
+                sizes.append(200)
         y_pos = np.array(y_pos)
         y_pos -= 50
         plt.scatter(x_pos, y_pos, c=colors, s=sizes)
-        plt.show()
+        plt.xlim(-5, 100)
+        plt.ylim(-55, 5)
+        plt.savefig('temp/{frame_number}.jpeg'.format(frame_number=frame_number))
+        plt.close()
         return self
         
 a = Game('01.03.2016', 'DEN', 'POR')  
+
+a.watch_play(game_time=0,   length=100)
 
 def plot_frame1(frame_number):
     """
@@ -260,6 +275,8 @@ def plot_frame1(frame_number):
     y_pos -= 50
     print x_pos, y_pos
     plt.scatter(x_pos, y_pos, c=colors, s=sizes)
+    plt.xlim(-5, 100)
+    plt.ylim(-55, 5)
     plt.show()
     
 plot_frame1(0)
