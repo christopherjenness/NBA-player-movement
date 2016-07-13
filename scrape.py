@@ -208,20 +208,36 @@ class Game(object):
         return self
         
     def plot_frame(self, frame_number):
+        """
+        """
         plt.figure(figsize=(12,6))
         draw_court()
-        plt.xlim(-10,110)
-        plt.ylim(-55,5)
+        x_pos = []
+        y_pos = []
+        colors = []
+        sizes = []
+        for player in a.moments.ix[0].positions:
+            x_pos.append(player[2])
+            y_pos.append(player[3])
+            # Need to update this, eventually.
+            # Pherhaps a dictionary of team:colors# include ball
+            colors.append(1)
+            # Use ball height for size
+            sizes.append(75)
+        y_pos = np.array(y_pos)
+        y_pos -= 50
+        plt.scatter(x_pos, y_pos, c=colors, s=sizes)
         plt.show()
         return self
         
 a = Game('01.03.2016', 'DEN', 'POR')  
 
+
         
 # http://opiateforthemass.es/articles/animate-nba-shot-events/
         
         
-        
+   
         
         
         
