@@ -47,6 +47,9 @@ class Game(object):
         self._get_tracking_data()
         self._get_playbyplay_data()
         self._format_tracking_data()
+        self.team_colors = {-1: "orange",
+                      self.moments.ix[0].positions[1][0]: "blue",
+                      self.moments.ix[0].positions[6][0]: "red"}
         print('done loading data')
     
     def _get_tracking_data(self):
@@ -115,7 +118,7 @@ class Game(object):
         moments['game_time'] = (moments.quarter - 1) * 720 + (720 - moments.quarter_time)
         self.moments = moments
 
-    def _draw_court(color="gray", lw=2, grid=False, zorder=0):
+    def _draw_court(self, color="gray", lw=2, grid=False, zorder=0):
         """
         Helper function to draw court.
         Modified from Savvas Tjortjoglou
@@ -123,7 +126,8 @@ class Game(object):
         """
         ax = plt.gca()
         # Creates the out of bounds lines around the court
-        outer = Rectangle((0,-50), width=94, height=50, color=color, zorder=0, fill=False, lw=lw)
+        outer = Rectangle((0,-50), width=94, height=50, color=color,
+                      zorder=zorder, fill=False, lw=lw)
 
         # The left and right basketball hoops
         l_hoop = Circle((5.35,-25), radius=.75, lw=lw, fill=False, color=color, zorder=zorder)
@@ -216,14 +220,15 @@ class Game(object):
         y_pos = []
         colors = []
         sizes = []
-        for player in a.moments.ix[0].positions:
+        for player in self.moments.ix[0].positions:
             x_pos.append(player[2])
             y_pos.append(player[3])
-            # Need to update this, eventually.
-            # Pherhaps a dictionary of team:colors# include ball
-            colors.append(1)
-            # Use ball height for size
-            sizes.append(75)
+            colors.append(self.team_colors[player[0]])
+            # Use ball height for size (useful to see a shot)
+            if player[0]==0:
+                sizes.append(300/player[4])
+            else:
+                sizes.append(75)
         y_pos = np.array(y_pos)
         y_pos -= 50
         plt.scatter(x_pos, y_pos, c=colors, s=sizes)
@@ -231,6 +236,33 @@ class Game(object):
         return self
         
 a = Game('01.03.2016', 'DEN', 'POR')  
+
+def plot_frame1(frame_number):
+    """
+    """
+    plt.figure(figsize=(12,6))
+    a._draw_court()
+    x_pos = []
+    y_pos = []
+    colors = []
+    sizes = []
+    for player in a.moments.ix[0].positions:
+        x_pos.append(player[2])
+        y_pos.append(player[3])
+        # Need to update this, eventually.
+        # Pherhaps a dictionary of team:colors# include ball
+        colors.append(a.team_colors[player[0]])
+        # Use ball height for size
+        if player[0]==0:
+            sizes.append(300/player[4])
+        sizes.append(75)
+    y_pos = np.array(y_pos)
+    y_pos -= 50
+    print x_pos, y_pos
+    plt.scatter(x_pos, y_pos, c=colors, s=sizes)
+    plt.show()
+    
+plot_frame1(0)
 
 
         
