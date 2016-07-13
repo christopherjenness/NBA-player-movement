@@ -7,7 +7,9 @@ Library for retrieving basektball player-tracking and play-by-play data.
 import os
 import json
 import pandas as pd
+
 os.chdir('/Users/christopherjenness/Desktop/Personal/SportVU/NBA-player-movement')
+os.system('mkdir temp')
 
 class Game(object):
     """
@@ -19,12 +21,12 @@ class Game(object):
         Args:
             date (str): 'MM.DD.YYYY', date of game
             home_team (str): 'XXX', abbreviation of home team
-            away_team (str): 'XXX', abbreviation of home team
+            away_team (str): 'XXX', abbreviation of away team
         
         Attributes:
             date (str): 'MM.DD.YYYY', date of game
             home_team (str): 'XXX', abbreviation of home team
-            away_team (str): 'XXX', abbreviation of home team
+            away_team (str): 'XXX', abbreviation of away team
             tracking_id (str): id to access player tracking data
                 Due to the way the SportVU data is stored, game_id is 
                 complicated: 'MM.DD.YYYY.AWAYTEAM.at.HOMETEAM'
@@ -62,12 +64,13 @@ class Game(object):
         with open('temp/{self.game_id}.json'.format(self=self)) as data_file:
             self.tracking_data = json.load(data_file) # Load this json
         os.remove('./temp/{self.game_id}.json'.format(self=self))
-        
-        
+        return self
+
     def _get_playbyplay_data(self):
         """
         Helper function for retrieving tracking data
         """
+        # stats.nba.com API call
         os.system('curl "http://stats.nba.com/stats/playbyplayv2?'
             'EndPeriod=0&'
             'EndRange=0&'
@@ -77,6 +80,8 @@ class Game(object):
             'SeasonType=Season&'
             'StartPeriod=0&'
             'StartRange=0" > {cwd}/temp/pbp_{self.game_id}.json'.format(cwd=os.getcwd(), self=self))
+        
+        # load play by play into pandas DataFrame
         with open("{cwd}/temp/pbp_{self.game_id}.json".format(cwd=os.getcwd(), self=self)) as json_file:
             parsed = json.load(json_file)['resultSets'][0]
         os.remove("{cwd}/temp/pbp_{self.game_id}.json".format(cwd=os.getcwd(), self=self))
@@ -84,17 +89,28 @@ class Game(object):
         self.pbp.columns= parsed['headers']
         return self
 
-a = Game('01.13.2016', 'DEN', 'GSW')             
+a = Game('01.13.2016', 'DEN', 'GSW')  
+
+df = pd.DataFrame(a.tracking_data['events'])
+df2 = pd.DataFrame()
+
+counter = 0
+for row in df.moments:
+    for inner_row in row['moments']:
+        df = df.append(inner_row[5])
+    counter += 1
+        
+
+        
+# http://opiateforthemass.es/articles/animate-nba-shot-events/
+        
+# http://opiateforthemass.es/articles/animate-nba-shot-events/
+        
+        
+        
+        
+        
+        
 
 
 
-
-
-             
-             
- 
-             
-             
-             
-             
-             
