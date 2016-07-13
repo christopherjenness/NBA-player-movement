@@ -41,8 +41,10 @@ class Game(object):
         self.tracking_data = None
         self.game_id = None
         self.pbp = None
+        self.moments = None
         self._get_tracking_data()
         self._get_playbyplay_data()
+        self._format_tracking_data()
         print('done loading data')
     
     def _get_tracking_data(self):
@@ -87,22 +89,36 @@ class Game(object):
         os.remove("{cwd}/temp/pbp_{self.game_id}.json".format(cwd=os.getcwd(), self=self))
         self.pbp = pd.DataFrame(parsed['rowSet'])
         self.pbp.columns= parsed['headers']
+        
+        # Get time in quarter reamining to cross-reference tracking data
+        self.pbp.Qmin = a.pbp.PCTIMESTRING.str.split(':', expand=True)[0]
+        self.pbp.Qsec = a.pbp.PCTIMESTRING.str.split(':', expand=True)[1]
+        self.pbp.Qtime = a.pbp.Qmin.astype(int)*60 + a.pbp.Qsec.astype(int)
+        self.pbp.game_time = (self.pbp.PERIOD - 1) * 720 + (720 - self.pbp.Qtime)
         return self
-
-a = Game('01.13.2016', 'DEN', 'GSW')  
-
-df = pd.DataFrame(a.tracking_data['events'])
-df2 = pd.DataFrame()
-
-counter = 0
-for row in df.moments:
-    for inner_row in row['moments']:
-        df = df.append(inner_row[5])
-    counter += 1
         
+    def _format_tracking_data(self):
+        """
+        Heler function to format tracking data into pandas DataFrame
+        """
+        events = pd.DataFrame(self.tracking_data['events'])
+        moments=[]
+        # Extract 'moments' 
+        for row in events['moments']:
+            for inner_row in row:
+                moments.append(inner_row)
+        moments = pd.DataFrame(moments)
+        moments = moments.drop_duplicates(subset=[1])
+        moments.columns = ['quarter', 'universe_time', 'quarter_time', 'shot_clock', 'unknown', 'positions']
+        moments['game_time'] = (moments.quarter - 1) * 720 + (720 - moments.quarter_time)
+        self.moments = moments
 
-        
-# http://opiateforthemass.es/articles/animate-nba-shot-events/
+a = Game('01.03.2016', 'DEN', 'POR')  
+
+
+
+
+    
         
 # http://opiateforthemass.es/articles/animate-nba-shot-events/
         
