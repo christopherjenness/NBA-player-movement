@@ -112,7 +112,24 @@ class Game(object):
         moments.columns = ['quarter', 'universe_time', 'quarter_time', 'shot_clock', 'unknown', 'positions']
         moments['game_time'] = (moments.quarter - 1) * 720 + (720 - moments.quarter_time)
         self.moments = moments
-
+        
+    def watch_play(self, game_time, length):
+        """
+        Method for viewing plays in game.  Outputs video file of play in cwd
+        
+        Args:
+            game_time: time in game to START play at
+            length (int): length of play to watch in SECONDS
+            
+        Returns: an instance of self (and outputs video vile of play)
+        """
+        # Get starting and ending frame from requested game_time and length
+        starting_frame = self.moments[self.moments.game_time.round() == game_time].index.values[0]
+        endinging_frame = self.moments[self.moments.game_time.round() == game_time + length].index.values[0]
+        
+        
+        return self
+        
 a = Game('01.03.2016', 'DEN', 'POR')  
 
 
