@@ -227,12 +227,15 @@ class Game(object):
     def plot_frame(self, frame_number):
         """
         """
+        game_time = int(np.round(self.moments.ix[frame_number]['game_time']))
         plt.figure(figsize=(12,6))
+        #plt.figure()
         self._draw_court()
         x_pos = []
         y_pos = []
         colors = []
         sizes = []
+        # Get player positions
         for player in self.moments.ix[frame_number].positions:
             x_pos.append(player[2])
             y_pos.append(player[3])
@@ -242,18 +245,46 @@ class Game(object):
                 sizes.append(max(150 - 2*(player[4]-5)**2, 10))
             else:
                 sizes.append(200)
+        # Get recent play by play moves (from 10 previous seconds)
+        commentary = [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ']
+        count = 0
+        for game_second in range(game_time - 10, game_time + 1):
+            for index, row in self.pbp[self.pbp.game_time == game_second].iterrows():
+                if row['HOMEDESCRIPTION']:
+                    commentary[count] = '{self.home_team}: '.format(self=self) + str(row['HOMEDESCRIPTION'])
+                    count += 1
+                if row['VISITORDESCRIPTION']:
+                    commentary[count] = '{self.away_team}: '.format(self=self) + str(row['VISITORDESCRIPTION'])
+                    count += 1
+                if row['NEUTRALDESCRIPTION']:
+                    commentary[count] = str(row['NEUTRALDESCRIPTION'])
+                    count += 1
+        print(commentary)
+        commentary_script = """{commentary[0]}
+                                \n{commentary[1]} 
+                                \n{commentary[2]} 
+                                \n{commentary[3]} 
+                                \n{commentary[4]} 
+                                \n{commentary[5]}
+                                """.format(commentary=commentary)
+        print(commentary_script)
         y_pos = np.array(y_pos)
         y_pos -= 50
         plt.scatter(x_pos, y_pos, c=colors, s=sizes)
         plt.xlim(-5, 100)
         plt.ylim(-55, 5)
-        plt.savefig('temp/{frame_number}.png'.format(frame_number=frame_number))
+        plt.figtext(0.21, -.51, commentary_script, size=20)
+        #plt.title(commentary_script, size=20)
+        plt.savefig('temp/{frame_number}.png'.format(frame_number=frame_number),bbox_inches='tight')
+        plt.show()
         plt.close()
         return self
         
-a = Game('01.03.2016', 'DEN', 'POR')  
+a = Game('01.03.2016', 'DEN', 'POR') 
 
-a.watch_play(game_time=0,   length=2)
+a.watch_play(0, 20)
+
+#a.watch_play(game_time=0,   length=2)
 
 def plot_frame1(frame_number):
     """
@@ -281,13 +312,16 @@ def plot_frame1(frame_number):
     plt.ylim(-55, 5)
     plt.show()
 
-
+plt.figure()
+plt.scatter([1, 2, 3, 4, 5], [1, 2, 3, 4, 5])
+plt.figtext(0.3, -0.08, 'test1 \ntest2', size=20)
+plt.savefig('test.png')
+plt.show()
         
 # http://opiateforthemass.es/articles/animate-nba-shot-events/
         
         
    
-        
         
         
 
