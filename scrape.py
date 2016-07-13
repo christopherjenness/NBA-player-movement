@@ -7,6 +7,8 @@ Library for retrieving basektball player-tracking and play-by-play data.
 import os
 import json
 import pandas as pd
+import matplotlib.pyplot as plt
+from matplotlib.patches import Circle, Rectangle, Arc
 
 os.chdir('/Users/christopherjenness/Desktop/Personal/SportVU/NBA-player-movement')
 os.system('mkdir temp')
@@ -91,9 +93,9 @@ class Game(object):
         self.pbp.columns= parsed['headers']
         
         # Get time in quarter reamining to cross-reference tracking data
-        self.pbp.Qmin = a.pbp.PCTIMESTRING.str.split(':', expand=True)[0]
-        self.pbp.Qsec = a.pbp.PCTIMESTRING.str.split(':', expand=True)[1]
-        self.pbp.Qtime = a.pbp.Qmin.astype(int)*60 + a.pbp.Qsec.astype(int)
+        self.pbp.Qmin = self.pbp.PCTIMESTRING.str.split(':', expand=True)[0]
+        self.pbp.Qsec = self.pbp.PCTIMESTRING.str.split(':', expand=True)[1]
+        self.pbp.Qtime = self.pbp.Qmin.astype(int)*60 + self.pbp.Qsec.astype(int)
         self.pbp.game_time = (self.pbp.PERIOD - 1) * 720 + (720 - self.pbp.Qtime)
         return self
         
@@ -112,7 +114,81 @@ class Game(object):
         moments.columns = ['quarter', 'universe_time', 'quarter_time', 'shot_clock', 'unknown', 'positions']
         moments['game_time'] = (moments.quarter - 1) * 720 + (720 - moments.quarter_time)
         self.moments = moments
+
+    def _draw_court(color="gray", lw=2, grid=False, zorder=0):
+        """
+        Helper function to draw court.
+        Modified from Savvas Tjortjoglou
+        http://savvastjortjoglou.com/nba-shot-sharts.html
+        """
+        ax = plt.gca()
+        # Creates the out of bounds lines around the court
+        outer = Rectangle((0,-50), width=94, height=50, color=color, zorder=0, fill=False, lw=lw)
+
+        # The left and right basketball hoops
+        l_hoop = Circle((5.35,-25), radius=.75, lw=lw, fill=False, color=color, zorder=zorder)
+        r_hoop = Circle((88.65,-25), radius=.75, lw=lw, fill=False,color=color, zorder=zorder)
         
+        # Left and right backboards
+        l_backboard = Rectangle((4,-28), 0, 6, lw=lw, color=color, zorder=zorder)
+        r_backboard = Rectangle((90, -28), 0, 6, lw=lw, color=color, zorder=zorder)
+
+        # Left and right paint areas
+        l_outer_box = Rectangle((0, -33), 19, 16, lw=lw, fill=False,
+                                color=color, zorder=zorder)    
+        l_inner_box = Rectangle((0, -31), 19, 12, lw=lw, fill=False,
+                                color=color, zorder=zorder)
+        r_outer_box = Rectangle((75, -33), 19, 16, lw=lw, fill=False,
+                                color=color, zorder=zorder)
+
+        r_inner_box = Rectangle((75, -31), 19, 12, lw=lw, fill=False,
+                                color=color, zorder=zorder)
+
+        # Left and right free throw circles
+        l_free_throw = Circle((19,-25), radius=6, lw=lw, fill=False,
+                              color=color, zorder=zorder)
+        r_free_throw = Circle((75, -25), radius=6, lw=lw, fill=False,
+                              color=color, zorder=zorder)
+
+        # Left and right corner 3-PT lines
+        # a is top lines
+        # b is the bottom lines
+        l_corner_a = Rectangle((0,-3), 14, 0, lw=lw, color=color,
+                               zorder=zorder)
+        l_corner_b = Rectangle((0,-47), 14, 0, lw=lw, color=color,
+                               zorder=zorder)
+        r_corner_a = Rectangle((80, -3), 14, 0, lw=lw, color=color,
+                               zorder=zorder)
+        r_corner_b = Rectangle((80, -47), 14, 0, lw=lw, color=color,
+                               zorder=zorder)
+        
+        # Left and right 3-PT line arcs
+        l_arc = Arc((5,-25), 47.5, 47.5, theta1=292, theta2=68, lw=lw,
+                    color=color, zorder=zorder)
+        r_arc = Arc((89, -25), 47.5, 47.5, theta1=112, theta2=248, lw=lw,
+                    color=color, zorder=zorder)
+
+        # half_court
+        # ax.axvline(470)
+        half_court = Rectangle((47,-50), 0, 50, lw=lw, color=color,
+                               zorder=zorder)
+        hc_big_circle = Circle((47, -25), radius=6, lw=lw, fill=False,
+                               color=color, zorder=zorder)
+        hc_sm_circle = Circle((47, -25), radius=2, lw=lw, fill=False,
+                              color=color, zorder=zorder)
+        court_elements = [l_hoop, l_backboard, l_outer_box, outer,
+                          l_inner_box, l_free_throw, l_corner_a,
+                          l_corner_b, l_arc, r_hoop, r_backboard, 
+                          r_outer_box, r_inner_box, r_free_throw,
+                          r_corner_a, r_corner_b, r_arc, half_court,
+                          hc_big_circle, hc_sm_circle]
+
+        # Add the court elements onto the axes
+        for element in court_elements:
+            ax.add_patch(element)
+
+        return ax
+
     def watch_play(self, game_time, length):
         """
         Method for viewing plays in game.  Outputs video file of play in cwd
@@ -125,17 +201,22 @@ class Game(object):
         """
         # Get starting and ending frame from requested game_time and length
         starting_frame = self.moments[self.moments.game_time.round() == game_time].index.values[0]
-        endinging_frame = self.moments[self.moments.game_time.round() == game_time + length].index.values[0]
+        ending_frame = self.moments[self.moments.game_time.round() == game_time + length].index.values[0]
         
+        for frame in range(starting_frame, ending_frame):
+            break
+        return self
         
+    def plot_frame(self, frame_number):
+        plt.figure(figsize=(12,6))
+        draw_court()
+        plt.xlim(-10,110)
+        plt.ylim(-55,5)
+        plt.show()
         return self
         
 a = Game('01.03.2016', 'DEN', 'POR')  
 
-
-
-
-    
         
 # http://opiateforthemass.es/articles/animate-nba-shot-events/
         
