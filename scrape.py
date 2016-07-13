@@ -11,6 +11,7 @@ import matplotlib.pyplot as plt
 from matplotlib.patches import Circle, Rectangle, Arc
 import numpy as np
 
+
 os.chdir('/Users/christopherjenness/Desktop/Personal/SportVU/NBA-player-movement')
 os.system('mkdir temp')
 
@@ -211,13 +212,15 @@ class Game(object):
         
         for frame in range(starting_frame, ending_frame):
             self.plot_frame(frame)
-        command = 'ffmpeg -framerate 20 -start_number {starting_frame} -i %d.jpeg -c:v libx264 -r 30 -pix_fmt yuv420p out.mp4'.format(starting_frame=starting_frame)
-        os.system(command)  
+        command = 'ffmpeg -framerate 20 -start_number {starting_frame} -i %d.png -c:v libx264 -r 30 -pix_fmt yuv420p out.mp4'.format(starting_frame=starting_frame)
+        os.chdir('temp')
+        os.system(command) 
+        os.chdir('..')
         
         #Delete images
         for file in os.listdir('./temp'):
-            if file.endswith('.jpeg'):
-                os.remove('./temp/{file}'.formage(file=file)
+            if file.endswith('.png'):
+                os.remove('./temp/{file}'.format(file=file))
 
         return self
         
@@ -244,13 +247,13 @@ class Game(object):
         plt.scatter(x_pos, y_pos, c=colors, s=sizes)
         plt.xlim(-5, 100)
         plt.ylim(-55, 5)
-        plt.savefig('temp/{frame_number}.jpeg'.format(frame_number=frame_number))
+        plt.savefig('temp/{frame_number}.png'.format(frame_number=frame_number))
         plt.close()
         return self
         
 a = Game('01.03.2016', 'DEN', 'POR')  
 
-a.watch_play(game_time=0,   length=100)
+a.watch_play(game_time=0,   length=2)
 
 def plot_frame1(frame_number):
     """
@@ -273,13 +276,10 @@ def plot_frame1(frame_number):
         sizes.append(75)
     y_pos = np.array(y_pos)
     y_pos -= 50
-    print x_pos, y_pos
     plt.scatter(x_pos, y_pos, c=colors, s=sizes)
     plt.xlim(-5, 100)
     plt.ylim(-55, 5)
     plt.show()
-    
-plot_frame1(0)
 
 
         
