@@ -10,7 +10,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib.patches import Circle, Rectangle, Arc
 import numpy as np
-
+import seaborn as sns
 
 os.chdir('/Users/christopherjenness/Desktop/Personal/SportVU/NBA-player-movement')
 os.system('mkdir temp')
@@ -246,9 +246,9 @@ class Game(object):
             else:
                 sizes.append(200)
         # Get recent play by play moves (from 10 previous seconds)
-        commentary = [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ']
+        commentary = ['.', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ']
         count = 0
-        for game_second in range(game_time - 10, game_time + 1):
+        for game_second in range(game_time - 10, game_time + 2):
             for index, row in self.pbp[self.pbp.game_time == game_second].iterrows():
                 if row['HOMEDESCRIPTION']:
                     commentary[count] = '{self.home_team}: '.format(self=self) + str(row['HOMEDESCRIPTION'])
@@ -259,7 +259,6 @@ class Game(object):
                 if row['NEUTRALDESCRIPTION']:
                     commentary[count] = str(row['NEUTRALDESCRIPTION'])
                     count += 1
-        print(commentary)
         commentary_script = """{commentary[0]}
                                 \n{commentary[1]} 
                                 \n{commentary[2]} 
@@ -267,63 +266,182 @@ class Game(object):
                                 \n{commentary[4]} 
                                 \n{commentary[5]}
                                 """.format(commentary=commentary)
-        print(commentary_script)
         y_pos = np.array(y_pos)
         y_pos -= 50
         plt.scatter(x_pos, y_pos, c=colors, s=sizes)
         plt.xlim(-5, 100)
         plt.ylim(-55, 5)
-        plt.figtext(0.21, -.51, commentary_script, size=20)
+        plt.figtext(0.23, -.6, commentary_script, size=20)
         #plt.title(commentary_script, size=20)
         plt.savefig('temp/{frame_number}.png'.format(frame_number=frame_number),bbox_inches='tight')
-        plt.show()
         plt.close()
         return self
         
 a = Game('01.03.2016', 'DEN', 'POR') 
 
-a.watch_play(0, 20)
+
+
+#a.watch_play(10, 60)
 
 #a.watch_play(game_time=0,   length=2)
 
-def plot_frame1(frame_number):
-    """
-    """
-    plt.figure(figsize=(12,6))
-    a._draw_court()
-    x_pos = []
-    y_pos = []
-    colors = []
-    sizes = []
-    for player in a.moments.ix[0].positions:
-        x_pos.append(player[2])
-        y_pos.append(player[3])
-        # Need to update this, eventually.
-        # Pherhaps a dictionary of team:colors# include ball
-        colors.append(a.team_colors[player[0]])
-        # Use ball height for size
-        if player[0]==0:
-            sizes.append(300/player[4])
-        sizes.append(75)
-    y_pos = np.array(y_pos)
-    y_pos -= 50
-    plt.scatter(x_pos, y_pos, c=colors, s=sizes)
-    plt.xlim(-5, 100)
-    plt.ylim(-55, 5)
-    plt.show()
 
-plt.figure()
-plt.scatter([1, 2, 3, 4, 5], [1, 2, 3, 4, 5])
-plt.figtext(0.3, -0.08, 'test1 \ntest2', size=20)
-plt.savefig('test.png')
-plt.show()
+
+class loaded(object):
+    def __init__(self, moments, pbp, home_team, away_team):
+        self.moments = moments
+        self.pbp = pbp
+        self.team_colors = {-1: "orange",
+                      self.moments.ix[0].positions[1][0]: sns.xkcd_rgb["denim blue"],
+                      self.moments.ix[0].positions[6][0]: sns.xkcd_rgb["pale red"]}
+        self.home_team = home_team
+        self.away_team = away_team
+
+    def plot_frame(self, frame_number):
+        """
+        """
+        game_time = int(np.round(self.moments.ix[frame_number]['game_time']))
+        fig = plt.figure(figsize=(12,6))
+        #plt.figure()
+        self._draw_court()
+        x_pos = []
+        y_pos = []
+        colors = []
+        sizes = []
+        # Get player positions
+        for player in self.moments.ix[frame_number].positions:
+            x_pos.append(player[2])
+            y_pos.append(player[3])
+            colors.append(self.team_colors[player[0]])
+            # Use ball height for size (useful to see a shot)
+            if player[0]==-1:
+                sizes.append(max(150 - 2*(player[4]-5)**2, 10))
+            else:
+                sizes.append(200)
+        # Get recent play by play moves (from 10 previous seconds)
+        commentary = ['.', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ']
+        count = 0
+        for game_second in range(game_time - 10, game_time + 2):
+            for index, row in self.pbp[self.pbp.game_time == game_second].iterrows():
+                if row['HOMEDESCRIPTION']:
+                    commentary[count] = '{self.home_team}: '.format(self=self) + str(row['HOMEDESCRIPTION'])
+                    count += 1
+                if row['VISITORDESCRIPTION']:
+                    commentary[count] = '{self.away_team}: '.format(self=self) + str(row['VISITORDESCRIPTION'])
+                    count += 1
+                if row['NEUTRALDESCRIPTION']:
+                    commentary[count] = str(row['NEUTRALDESCRIPTION'])
+                    count += 1
+        commentary_script = """{commentary[0]}
+                                \n{commentary[1]} 
+                                \n{commentary[2]} 
+                                \n{commentary[3]} 
+                                \n{commentary[4]} 
+                                \n{commentary[5]}
+                                """.format(commentary=commentary)
+        y_pos = np.array(y_pos)
+        frame = plt.gca()
+        frame.axes.get_xaxis().set_ticks([])
+        frame.axes.get_yaxis().set_ticks([])
+        y_pos -= 50
+        plt.scatter(x_pos, y_pos, c=colors, s=sizes, alpha=0.85)
+        plt.xlim(-5, 100)
+        plt.ylim(-55, 5)
+        sns.set_style('dark')
+        plt.figtext(0.23, -.6, commentary_script, size=20)
+        #plt.title(commentary_script, size=20)
+        plt.savefig('temp/{frame_number}.png'.format(frame_number=frame_number),bbox_inches='tight')
+        plt.show()
+        plt.close()
+        return self
+    def _draw_court(self, color="gray", lw=2, grid=False, zorder=0):
+        """
+        Helper function to draw court.
+        Modified from Savvas Tjortjoglou
+        http://savvastjortjoglou.com/nba-shot-sharts.html
+        """
+        ax = plt.gca()
+        # Creates the out of bounds lines around the court
+        outer = Rectangle((0,-50), width=94, height=50, color=color,
+                      zorder=zorder, fill=False, lw=lw)
+
+        # The left and right basketball hoops
+        l_hoop = Circle((5.35,-25), radius=.75, lw=lw, fill=False, color=color, zorder=zorder)
+        r_hoop = Circle((88.65,-25), radius=.75, lw=lw, fill=False,color=color, zorder=zorder)
         
+        # Left and right backboards
+        l_backboard = Rectangle((4,-28), 0, 6, lw=lw, color=color, zorder=zorder)
+        r_backboard = Rectangle((90, -28), 0, 6, lw=lw, color=color, zorder=zorder)
+
+        # Left and right paint areas
+        l_outer_box = Rectangle((0, -33), 19, 16, lw=lw, fill=False,
+                                color=color, zorder=zorder)    
+        l_inner_box = Rectangle((0, -31), 19, 12, lw=lw, fill=False,
+                                color=color, zorder=zorder)
+        r_outer_box = Rectangle((75, -33), 19, 16, lw=lw, fill=False,
+                                color=color, zorder=zorder)
+
+        r_inner_box = Rectangle((75, -31), 19, 12, lw=lw, fill=False,
+                                color=color, zorder=zorder)
+
+        # Left and right free throw circles
+        l_free_throw = Circle((19,-25), radius=6, lw=lw, fill=False,
+                              color=color, zorder=zorder)
+        r_free_throw = Circle((75, -25), radius=6, lw=lw, fill=False,
+                              color=color, zorder=zorder)
+
+        # Left and right corner 3-PT lines
+        # a is top lines
+        # b is the bottom lines
+        l_corner_a = Rectangle((0,-3), 14, 0, lw=lw, color=color,
+                               zorder=zorder)
+        l_corner_b = Rectangle((0,-47), 14, 0, lw=lw, color=color,
+                               zorder=zorder)
+        r_corner_a = Rectangle((80, -3), 14, 0, lw=lw, color=color,
+                               zorder=zorder)
+        r_corner_b = Rectangle((80, -47), 14, 0, lw=lw, color=color,
+                               zorder=zorder)
+        
+        # Left and right 3-PT line arcs
+        l_arc = Arc((5,-25), 47.5, 47.5, theta1=292, theta2=68, lw=lw,
+                    color=color, zorder=zorder)
+        r_arc = Arc((89, -25), 47.5, 47.5, theta1=112, theta2=248, lw=lw,
+                    color=color, zorder=zorder)
+
+        # half_court
+        # ax.axvline(470)
+        half_court = Rectangle((47,-50), 0, 50, lw=lw, color=color,
+                               zorder=zorder)
+        hc_big_circle = Circle((47, -25), radius=6, lw=lw, fill=False,
+                               color=color, zorder=zorder)
+        hc_sm_circle = Circle((47, -25), radius=2, lw=lw, fill=False,
+                              color=color, zorder=zorder)
+        court_elements = [l_hoop, l_backboard, l_outer_box, outer,
+                          l_inner_box, l_free_throw, l_corner_a,
+                          l_corner_b, l_arc, r_hoop, r_backboard, 
+                          r_outer_box, r_inner_box, r_free_throw,
+                          r_corner_a, r_corner_b, r_arc, half_court,
+                          hc_big_circle, hc_sm_circle]
+
+        # Add the court elements onto the axes
+        for element in court_elements:
+            ax.add_patch(element)
+
+        return ax
+
+b=loaded(a.moments, a.pbp, a.home_team, a.away_team)
+
+b.plot_frame(100)
+
 # http://opiateforthemass.es/articles/animate-nba-shot-events/
         
         
    
         
         
+
+
+
 
 
 
