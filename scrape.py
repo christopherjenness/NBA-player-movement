@@ -102,6 +102,9 @@ class Game(object):
         self.pbp.Qsec = self.pbp.PCTIMESTRING.str.split(':', expand=True)[1]
         self.pbp.Qtime = self.pbp.Qmin.astype(int)*60 + self.pbp.Qsec.astype(int)
         self.pbp.game_time = (self.pbp.PERIOD - 1) * 720 + (720 - self.pbp.Qtime)
+        
+        #Format score so that it makes sense 'XX-XX'
+        self.pbp.SCORE = self.pbp.SCORE.fillna(method='ffill').fillna('0 - 0')
         return self
         
     def _format_tracking_data(self):
@@ -212,7 +215,7 @@ class Game(object):
         
         for frame in range(starting_frame, ending_frame):
             self.plot_frame(frame)
-        command = 'ffmpeg -framerate 20 -start_number {starting_frame} -i %d.png -c:v libx264 -r 30 -pix_fmt yuv420p out.mp4'.format(starting_frame=starting_frame)
+        command = 'ffmpeg -framerate 20 -start_number {starting_frame} -i %d.png -c:v libx264 -r 30 -pix_fmt yuv420p -vf "scale=trunc(iw/2)*2:trunc(ih/2)*2" out.mp4'.format(starting_frame=starting_frame)
         os.chdir('temp')
         os.system(command) 
         os.chdir('..')
@@ -227,80 +230,8 @@ class Game(object):
     def plot_frame(self, frame_number):
         """
         """
-        game_time = int(np.round(self.moments.ix[frame_number]['game_time']))
-        plt.figure(figsize=(12,6))
-        #plt.figure()
-        self._draw_court()
-        x_pos = []
-        y_pos = []
-        colors = []
-        sizes = []
-        # Get player positions
-        for player in self.moments.ix[frame_number].positions:
-            x_pos.append(player[2])
-            y_pos.append(player[3])
-            colors.append(self.team_colors[player[0]])
-            # Use ball height for size (useful to see a shot)
-            if player[0]==-1:
-                sizes.append(max(150 - 2*(player[4]-5)**2, 10))
-            else:
-                sizes.append(200)
-        # Get recent play by play moves (from 10 previous seconds)
-        commentary = ['.', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ']
-        count = 0
-        for game_second in range(game_time - 10, game_time + 2):
-            for index, row in self.pbp[self.pbp.game_time == game_second].iterrows():
-                if row['HOMEDESCRIPTION']:
-                    commentary[count] = '{self.home_team}: '.format(self=self) + str(row['HOMEDESCRIPTION'])
-                    count += 1
-                if row['VISITORDESCRIPTION']:
-                    commentary[count] = '{self.away_team}: '.format(self=self) + str(row['VISITORDESCRIPTION'])
-                    count += 1
-                if row['NEUTRALDESCRIPTION']:
-                    commentary[count] = str(row['NEUTRALDESCRIPTION'])
-                    count += 1
-        commentary_script = """{commentary[0]}
-                                \n{commentary[1]} 
-                                \n{commentary[2]} 
-                                \n{commentary[3]} 
-                                \n{commentary[4]} 
-                                \n{commentary[5]}
-                                """.format(commentary=commentary)
-        y_pos = np.array(y_pos)
-        y_pos -= 50
-        plt.scatter(x_pos, y_pos, c=colors, s=sizes)
-        plt.xlim(-5, 100)
-        plt.ylim(-55, 5)
-        plt.figtext(0.23, -.6, commentary_script, size=20)
-        #plt.title(commentary_script, size=20)
-        plt.savefig('temp/{frame_number}.png'.format(frame_number=frame_number),bbox_inches='tight')
-        plt.close()
-        return self
-        
-a = Game('01.03.2016', 'DEN', 'POR') 
-
-
-
-#a.watch_play(10, 60)
-
-#a.watch_play(game_time=0,   length=2)
-
-
-
-class loaded(object):
-    def __init__(self, moments, pbp, home_team, away_team):
-        self.moments = moments
-        self.pbp = pbp
-        self.team_colors = {-1: "orange",
-                      self.moments.ix[0].positions[1][0]: sns.xkcd_rgb["denim blue"],
-                      self.moments.ix[0].positions[6][0]: sns.xkcd_rgb["pale red"]}
-        self.home_team = home_team
-        self.away_team = away_team
-
-    def plot_frame(self, frame_number):
-        """
-        """
-        game_time = int(np.round(self.moments.ix[frame_number]['game_time']))
+        current_moment = self.moments.ix[frame_number]
+        game_time = int(np.round(current_moment['game_time']))
         fig = plt.figure(figsize=(12,6))
         #plt.figure()
         self._draw_court()
@@ -309,7 +240,7 @@ class loaded(object):
         colors = []
         sizes = []
         # Get player positions
-        for player in self.moments.ix[frame_number].positions:
+        for player in current_moment.positions:
             x_pos.append(player[2])
             y_pos.append(player[3])
             colors.append(self.team_colors[player[0]])
@@ -332,6 +263,7 @@ class loaded(object):
                 if row['NEUTRALDESCRIPTION']:
                     commentary[count] = str(row['NEUTRALDESCRIPTION'])
                     count += 1
+                score = str(row['SCORE'])
         commentary_script = """{commentary[0]}
                                 \n{commentary[1]} 
                                 \n{commentary[2]} 
@@ -339,6 +271,16 @@ class loaded(object):
                                 \n{commentary[4]} 
                                 \n{commentary[5]}
                                 """.format(commentary=commentary)
+        
+        # Get quarter, game clock, shot clock
+        shot_clock = current_moment.shot_clock
+        if np.isnan(shot_clock) :
+            shot_clock = 24.00
+        shot_clock = str(shot_clock).split('.')[0]
+        game_min, game_sec = divmod(current_moment.quarter_time, 60)
+        game_clock = "%02d:%02d" % (game_min, game_sec)
+        quarter = current_moment.quarter
+        print(shot_clock, game_clock, quarter)
         y_pos = np.array(y_pos)
         frame = plt.gca()
         frame.axes.get_xaxis().set_ticks([])
@@ -349,11 +291,107 @@ class loaded(object):
         plt.ylim(-55, 5)
         sns.set_style('dark')
         plt.figtext(0.23, -.6, commentary_script, size=20)
+        plt.figtext(0.43, 0.125, shot_clock, size=18)
+        plt.figtext(0.5, 0.125, 'Q'+str(quarter), size=18)
+        plt.figtext(0.57, 0.125, str(game_clock), size=18)
+        plt.figtext(0.43, .85, self.away_team + "  " + score + "  " + self.home_team, size = 18)
+        #plt.title(commentary_script, size=20)
+        plt.savefig('temp/{frame_number}.png'.format(frame_number=frame_number),bbox_inches='tight')
+        plt.close()
+        return self
+        
+a = Game('01.03.2016', 'DEN', 'POR') 
+
+a.watch_play(200, 1)
+
+#a.watch_play(game_time=0,   length=2)
+
+
+
+class loaded(object):
+    def __init__(self, moments, pbp, home_team, away_team):
+        self.moments = moments
+        self.pbp = pbp
+        self.team_colors = {-1: sns.xkcd_rgb["amber"],
+                      self.moments.ix[0].positions[1][0]: sns.xkcd_rgb["denim blue"],
+                      self.moments.ix[0].positions[6][0]: sns.xkcd_rgb["pale red"]}
+        self.home_team = home_team
+        self.away_team = away_team
+
+    def plot_frame(self, frame_number):
+        """
+        """
+        current_moment = self.moments.ix[frame_number]
+        game_time = int(np.round(current_moment['game_time']))
+        fig = plt.figure(figsize=(12,6))
+        #plt.figure()
+        self._draw_court()
+        x_pos = []
+        y_pos = []
+        colors = []
+        sizes = []
+        # Get player positions
+        for player in current_moment.positions:
+            x_pos.append(player[2])
+            y_pos.append(player[3])
+            colors.append(self.team_colors[player[0]])
+            # Use ball height for size (useful to see a shot)
+            if player[0]==-1:
+                sizes.append(max(150 - 2*(player[4]-5)**2, 10))
+            else:
+                sizes.append(200)
+        # Get recent play by play moves (from 10 previous seconds)
+        commentary = ['.', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ']
+        count = 0
+        for game_second in range(game_time - 10, game_time + 2):
+            for index, row in self.pbp[self.pbp.game_time == game_second].iterrows():
+                if row['HOMEDESCRIPTION']:
+                    commentary[count] = '{self.home_team}: '.format(self=self) + str(row['HOMEDESCRIPTION'])
+                    count += 1
+                if row['VISITORDESCRIPTION']:
+                    commentary[count] = '{self.away_team}: '.format(self=self) + str(row['VISITORDESCRIPTION'])
+                    count += 1
+                if row['NEUTRALDESCRIPTION']:
+                    commentary[count] = str(row['NEUTRALDESCRIPTION'])
+                    count += 1
+                score = str(row['SCORE'])
+        commentary_script = """{commentary[0]}
+                                \n{commentary[1]} 
+                                \n{commentary[2]} 
+                                \n{commentary[3]} 
+                                \n{commentary[4]} 
+                                \n{commentary[5]}
+                                """.format(commentary=commentary)
+        
+        # Get quarter, game clock, shot clock
+        shot_clock = current_moment.shot_clock
+        if np.isnan(shot_clock) :
+            shot_clock = 24.00
+        shot_clock = str(shot_clock).split('.')[0]
+        game_min, game_sec = divmod(current_moment.quarter_time, 60)
+        game_clock = "%02d:%02d" % (game_min, game_sec)
+        quarter = current_moment.quarter
+        print(shot_clock, game_clock, quarter)
+        y_pos = np.array(y_pos)
+        frame = plt.gca()
+        frame.axes.get_xaxis().set_ticks([])
+        frame.axes.get_yaxis().set_ticks([])
+        y_pos -= 50
+        plt.scatter(x_pos, y_pos, c=colors, s=sizes, alpha=0.85)
+        plt.xlim(-5, 100)
+        plt.ylim(-55, 5)
+        sns.set_style('dark')
+        plt.figtext(0.23, -.6, commentary_script, size=20)
+        plt.figtext(0.43, 0.13, shot_clock, size=18)
+        plt.figtext(0.5, 0.13, 'Q'+str(quarter), size=18)
+        plt.figtext(0.57, 0.13, str(game_clock), size=18)
+        plt.figtext(0.43, .85, self.away_team + "  " + score + "  " + self.home_team, size = 18)
         #plt.title(commentary_script, size=20)
         plt.savefig('temp/{frame_number}.png'.format(frame_number=frame_number),bbox_inches='tight')
         plt.show()
         plt.close()
         return self
+
     def _draw_court(self, color="gray", lw=2, grid=False, zorder=0):
         """
         Helper function to draw court.
@@ -431,14 +469,17 @@ class loaded(object):
 
 b=loaded(a.moments, a.pbp, a.home_team, a.away_team)
 
-b.plot_frame(100)
+#b.plot_frame(301)
 
 # http://opiateforthemass.es/articles/animate-nba-shot-events/
-        
+
+
+
         
    
         
         
+
 
 
 
