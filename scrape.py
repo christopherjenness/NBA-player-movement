@@ -65,18 +65,19 @@ class Game(object):
         """
         Helper function for retrieving tracking data
         """
-        # Extract Data into /temp folder
-        datalink = "https://raw.githubusercontent.com/neilmj/BasketballData/master/2016.NBA.Raw.SportVU.Game.Logs/{self.tracking_id}.7z".format(self=self)
-        os.system("curl " + datalink + " -o " + os.getcwd() + '/temp/zipdata') 
-        os.system("7za -o./temp x " + os.getcwd() + '/temp/zipdata') 
+        # Retrive and extract Data into /temp folder
+        datalink = """https://raw.githubusercontent.com/neilmj/BasketballData/master/
+                      2016.NBA.Raw.SportVU.Game.Logs/{self.tracking_id}.7z""".format(self=self)
+        os.system("curl {datalink} -o {os.getcwd()}/temp/zipdata".format(datalink=datalink, os=os)) 
+        os.system("7za -o./temp x {os.getcwd()} /temp/zipdata".format(os=os)) 
         os.remove("./temp/zipdata")
         
         # Extract game ID from extracted file name.
         for file in os.listdir('./temp'):
-            if file.endswith('.json'):
+            if os.path.splitext(file)[1] == '.json':
                 self.game_id = file[:-5]
         
-        # Load tracking data
+        # Load tracking data and remove json file
         with open('temp/{self.game_id}.json'.format(self=self)) as data_file:
             self.tracking_data = json.load(data_file) # Load this json
         os.remove('./temp/{self.game_id}.json'.format(self=self))
@@ -105,13 +106,13 @@ class Game(object):
         self.pbp.columns= parsed['headers']
         
         # Get time in quarter reamining to cross-reference tracking data
-        self.pbp.Qmin = self.pbp.PCTIMESTRING.str.split(':', expand=True)[0]
-        self.pbp.Qsec = self.pbp.PCTIMESTRING.str.split(':', expand=True)[1]
-        self.pbp.Qtime = self.pbp.Qmin.astype(int)*60 + self.pbp.Qsec.astype(int)
-        self.pbp.game_time = (self.pbp.PERIOD - 1) * 720 + (720 - self.pbp.Qtime)
+        self.pbp['Qmin'] = self.pbp['PCTIMESTRING'].str.split(':', expand=True)[0]
+        self.pbp['Qsec'] = self.pbp['PCTIMESTRING'].str.split(':', expand=True)[1]
+        self.pbp['Qtime'] = self.pbp['Qmin'].astype(int)*60 + self.pbp['Qsec'].astype(int)
+        self.pbp['game_time'] = (self.pbp['PERIOD'] - 1) * 720 + (720 - self.pbp['Qtime'])
         
         #Format score so that it makes sense 'XX-XX'
-        self.pbp.SCORE = self.pbp.SCORE.fillna(method='ffill').fillna('0 - 0')
+        self.pbp['SCORE'] = self.pbp['SCORE'].fillna(method='ffill').fillna('0 - 0')
         return self
         
     def _format_tracking_data(self):
@@ -119,16 +120,19 @@ class Game(object):
         Heler function to format tracking data into pandas DataFrame
         """
         events = pd.DataFrame(self.tracking_data['events'])
-        moments=[]
+        moments = []
         # Extract 'moments' 
         for row in events['moments']:
             for inner_row in row:
                 moments.append(inner_row)
         moments = pd.DataFrame(moments)
         moments = moments.drop_duplicates(subset=[1])
-        moments = moments.reset_index()
-        moments.columns = ['index', 'quarter', 'universe_time', 'quarter_time', 'shot_clock', 'unknown', 'positions']
+        moments = moments.reset_index()asdf
+        
+        moments.columns = ['index', 'quarter', 'universe_time', 'quarter_time', 
+                           'shot_clock', 'unknown', 'positions']
         moments['game_time'] = (moments.quarter - 1) * 720 + (720 - moments.quarter_time)
+        moments.drop(['index', 'unknown'], axis=1, inplace=True)
         self.moments = moments
 
     def _draw_court(self, color="gray", lw=2, grid=False, zorder=0):
