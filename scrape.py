@@ -138,42 +138,31 @@ class Game(object):
     def _draw_court(self, color="gray", lw=2, grid=False, zorder=0):
         """
         Helper function to draw court.
-        Modified from Savvas Tjortjoglou
-        http://savvastjortjoglou.com/nba-shot-sharts.html
+        Modified from Savvas Tjortjoglou, and Michael Wheelock
+        Savvas Tjortjoglou: http://savvastjortjoglou.com/nba-shot-sharts.html
+        Michael Wheelock: https://www.linkedin.com/in/michael-s-wheelock-a5635a66
         """
         ax = plt.gca()
-        # Creates the out of bounds lines around the court
+        
+        # Create the court lines
         outer = Rectangle((0,-50), width=94, height=50, color=color,
                       zorder=zorder, fill=False, lw=lw)
-
-        # The left and right basketball hoops
         l_hoop = Circle((5.35,-25), radius=.75, lw=lw, fill=False, color=color, zorder=zorder)
         r_hoop = Circle((88.65,-25), radius=.75, lw=lw, fill=False,color=color, zorder=zorder)
-        
-        # Left and right backboards
         l_backboard = Rectangle((4,-28), 0, 6, lw=lw, color=color, zorder=zorder)
         r_backboard = Rectangle((90, -28), 0, 6, lw=lw, color=color, zorder=zorder)
-
-        # Left and right paint areas
         l_outer_box = Rectangle((0, -33), 19, 16, lw=lw, fill=False,
                                 color=color, zorder=zorder)    
         l_inner_box = Rectangle((0, -31), 19, 12, lw=lw, fill=False,
                                 color=color, zorder=zorder)
         r_outer_box = Rectangle((75, -33), 19, 16, lw=lw, fill=False,
                                 color=color, zorder=zorder)
-
         r_inner_box = Rectangle((75, -31), 19, 12, lw=lw, fill=False,
                                 color=color, zorder=zorder)
-
-        # Left and right free throw circles
         l_free_throw = Circle((19,-25), radius=6, lw=lw, fill=False,
                               color=color, zorder=zorder)
         r_free_throw = Circle((75, -25), radius=6, lw=lw, fill=False,
                               color=color, zorder=zorder)
-
-        # Left and right corner 3-PT lines
-        # a is top lines
-        # b is the bottom lines
         l_corner_a = Rectangle((0,-3), 14, 0, lw=lw, color=color,
                                zorder=zorder)
         l_corner_b = Rectangle((0,-47), 14, 0, lw=lw, color=color,
@@ -182,15 +171,10 @@ class Game(object):
                                zorder=zorder)
         r_corner_b = Rectangle((80, -47), 14, 0, lw=lw, color=color,
                                zorder=zorder)
-        
-        # Left and right 3-PT line arcs
         l_arc = Arc((5,-25), 47.5, 47.5, theta1=292, theta2=68, lw=lw,
                     color=color, zorder=zorder)
         r_arc = Arc((89, -25), 47.5, 47.5, theta1=112, theta2=248, lw=lw,
                     color=color, zorder=zorder)
-
-        # half_court
-        # ax.axvline(470)
         half_court = Rectangle((47,-50), 0, 50, lw=lw, color=color,
                                zorder=zorder)
         hc_big_circle = Circle((47, -25), radius=6, lw=lw, fill=False,
