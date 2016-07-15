@@ -1,0 +1,20 @@
+Description of Play-by-play ‘EVENTMSGTYPE’
+
+1: Made FG
+2: Miss FG
+3: FT Attempt
+4: Rebound
+5: Turnover
+6: Foul
+7: Lane Violation (?)
+8: Substitution 
+9: Timeout
+10: Jump Ball
+11: (?)
+12: Quarter Start
+13: Quarter End
+14: (?)
+15: (?)
+16: (?)
+17: (?)
+18: (?)
