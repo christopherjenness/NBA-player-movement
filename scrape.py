@@ -31,16 +31,26 @@ class Game(object):
             date (str): 'MM.DD.YYYY', date of game
             home_team (str): 'XXX', abbreviation of home team
             away_team (str): 'XXX', abbreviation of away team
+            team_colors (dict): dictionary of colors for each team and ball.  Used for ploting.
             tracking_id (str): id to access player tracking data
                 Due to the way the SportVU data is stored, game_id is 
                 complicated: 'MM.DD.YYYY.AWAYTEAM.at.HOMETEAM'
                 For Example: 01.13.2016.GSW.at.DEN
             pbp (pd.DataFrame): Play by play data.  33 columns per pbp instance.
             game_id (str): ID for game.  Lukcily, SportVU and play by play use the same game ID
+            moments (pd.DataFrame): DataFrame of player tracking data.  Each entry is a single
+                snap-shot of where the players are at a given time on the court.  
+                Columns: ['quarter', 'universe_time', 'quarter_time', 'shot_clock',
+                'positions', 'game_time'].
+                moments['positions'] contains a list of where each player and the ball
+                are located.
         """
         self.date = date
         self.home_team = home_team
         self.away_team = away_team
+        self.team_colors = {-1: "orange",
+                            self.moments.ix[0].positions[1][0]: "blue",
+                            self.moments.ix[0].positions[6][0]: "red"}        
         self.tracking_id = '{self.date}.{self.away_team}.at.{self.home_team}'.format(self=self)
         self.tracking_data = None
         self.game_id = None
@@ -49,10 +59,7 @@ class Game(object):
         self._get_tracking_data()
         self._get_playbyplay_data()
         self._format_tracking_data()
-        self.team_colors = {-1: "orange",
-                      self.moments.ix[0].positions[1][0]: "blue",
-                      self.moments.ix[0].positions[6][0]: "red"}
-        print('done loading data')
+        print('All data is loaded')
     
     def _get_tracking_data(self):
         """
