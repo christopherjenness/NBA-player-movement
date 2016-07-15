@@ -3,6 +3,8 @@ Library for retrieving basektball player-tracking and play-by-play data.
 """
 
 # brew install p7zip
+# brew install curl
+# brew install ffmpeg --with-libvpx
 
 import os
 import json
@@ -196,13 +198,14 @@ class Game(object):
 
     def watch_play(self, game_time, length):
         """
-        Method for viewing plays in game.  Outputs video file of play in cwd
+        Method for viewing plays in game.  
+        Outputs video file of play in {cwd}/temp
         
         Args:
-            game_time: time in game to START play at
-            length (int): length of play to watch in SECONDS
+            game_time: time in game to start play at (seconds into the game)
+            length (int): length of play to watch (seconds)
             
-        Returns: an instance of self (and outputs video vile of play)
+        Returns: an instance of self, and outputs video file of play
         """
         # Get starting and ending frame from requested game_time and length
         starting_frame = self.moments[self.moments.game_time.round() == game_time].index.values[0]
@@ -217,19 +220,67 @@ class Game(object):
         
         #Delete images
         for file in os.listdir('./temp'):
-            if file.endswith('.png'):
+            if os.path.splitext(file) == '.png':
                 os.remove('./temp/{file}'.format(file=file))
 
         return self
+
+    def _get_commentary(self, game_time, commentary_length=6, commentary_depth=10):
+        """
+        Helper function for returning play by play events for a given game time.
+        
+        Args:
+            game_time (int): game time (in seconds) for which to retrieve commentary for
+            commentary_length (int): Number of play-by-play calls to include in commentary
+            commentary_depth (int): Number of seconds to look in past to retrieve play-by-play calls
+                commentary_depth=10 looks at previous 10 seconds of game for play-by-play calls
+            
+        Returns:
+            str: string of commentary (most recent play-by-play calls, seperated by line breaks)
+        """
+        commentary = [' 'for i in range(commentary_length)]]
+        commentary[0] = '.'
+        count = 0
+        for game_second in range(game_time - commentary_depth, game_time + 2):
+            for index, row in self.pbp[self.pbp.game_time == game_second].iterrows():
+                if row['HOMEDESCRIPTION']:
+                    commentary[count] = '{self.home_team}: '.format(self=self) + str(row['HOMEDESCRIPTION'])
+                    count += 1
+                if row['VISITORDESCRIPTION']:
+                    commentary[count] = '{self.away_team}: '.format(self=self) + str(row['VISITORDESCRIPTION'])
+                    count += 1
+                if row['NEUTRALDESCRIPTION']:
+                    commentary[count] = str(row['NEUTRALDESCRIPTION'])
+                    count += 1
+                score = str(row['SCORE'])
+                if count == commentary_length - 1:
+                    break
+        commentary_script = """{commentary[0]}
+                                \n{commentary[1]} 
+                                \n{commentary[2]} 
+                                \n{commentary[3]} 
+                                \n{commentary[4]} 
+                                \n{commentary[5]}
+                                """.format(commentary=commentary)
+        return commentary_script
+        
         
     def plot_frame(self, frame_number):
         """
+        Creates an individual frame of game.
+        Outputs .png file in {cwd}/temp
+        
+        Args:
+            frame_number (int): number of frame in game to create
+                frame_number gets player tracking data from moments.ix[frame_number]
+                
+        Returns: an instance of self, and outputs .png file of frame
+            
+        TODO be able to call this method by game time instead of frame_number
         """
         current_moment = self.moments.ix[frame_number]
         game_time = int(np.round(current_moment['game_time']))
-        fig = plt.figure(figsize=(12,6))
-        #plt.figure()
-        self._draw_court()
+
         x_pos = []
         y_pos = []
         colors = []
@@ -277,6 +328,8 @@ class Game(object):
         quarter = current_moment.quarter
         print(shot_clock, game_clock, quarter)
         y_pos = np.array(y_pos)
+        fig = plt.figure(figsize=(12,6))
+        self._draw_court()
         frame = plt.gca()
         frame.axes.get_xaxis().set_ticks([])
         frame.axes.get_yaxis().set_ticks([])
@@ -468,9 +521,6 @@ b=loaded(a.moments, a.pbp, a.home_team, a.away_team)
 
 # http://opiateforthemass.es/articles/animate-nba-shot-events/
 
-
-
-        
    
         
         
