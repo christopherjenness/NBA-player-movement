@@ -264,23 +264,25 @@ class Game(object):
                                 """.format(commentary=commentary)
         return commentary_script
         
-        
-    def plot_frame(self, frame_number):
+    def _get_moment_details(self, frame_number):
         """
-        Creates an individual frame of game.
-        Outputs .png file in {cwd}/temp
+        Returns important information for a given frame
         
         Args:
             frame_number (int): number of frame in game to create
                 frame_number gets player tracking data from moments.ix[frame_number]
                 
-        Returns: an instance of self, and outputs .png file of frame
-            
-        TODO be able to call this method by game time instead of frame_number
+        Returns: tuple of data
+            x_pos (list): list of x coordinants for all players and ball
+            y_pos (list): list of y coordinants for all players and ball
+            colors (list): color coding of each player/ball for coordinant data
+            sizes (list): size of each player/ball (used for showing ball height)
+            quarter (int): Game quarter
+            shot_clock (str): shot clock
+            game_clock (str): game clock
         """
         current_moment = self.moments.ix[frame_number]
         game_time = int(np.round(current_moment['game_time']))
-
         x_pos = []
         y_pos = []
         colors = []
@@ -295,30 +297,7 @@ class Game(object):
                 sizes.append(max(150 - 2*(player[4]-5)**2, 10))
             else:
                 sizes.append(200)
-        # Get recent play by play moves (from 10 previous seconds)
-        commentary = ['.', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ']
-        count = 0
-        for game_second in range(game_time - 10, game_time + 2):
-            for index, row in self.pbp[self.pbp.game_time == game_second].iterrows():
-                if row['HOMEDESCRIPTION']:
-                    commentary[count] = '{self.home_team}: '.format(self=self) + str(row['HOMEDESCRIPTION'])
-                    count += 1
-                if row['VISITORDESCRIPTION']:
-                    commentary[count] = '{self.away_team}: '.format(self=self) + str(row['VISITORDESCRIPTION'])
-                    count += 1
-                if row['NEUTRALDESCRIPTION']:
-                    commentary[count] = str(row['NEUTRALDESCRIPTION'])
-                    count += 1
-                score = str(row['SCORE'])
-        commentary_script = """{commentary[0]}
-                                \n{commentary[1]} 
-                                \n{commentary[2]} 
-                                \n{commentary[3]} 
-                                \n{commentary[4]} 
-                                \n{commentary[5]}
-                                """.format(commentary=commentary)
-        
-        # Get quarter, game clock, shot clock
+        y_pos = np.array(y_pos) - 50
         shot_clock = current_moment.shot_clock
         if np.isnan(shot_clock) :
             shot_clock = 24.00
@@ -326,14 +305,29 @@ class Game(object):
         game_min, game_sec = divmod(current_moment.quarter_time, 60)
         game_clock = "%02d:%02d" % (game_min, game_sec)
         quarter = current_moment.quarter
-        print(shot_clock, game_clock, quarter)
-        y_pos = np.array(y_pos)
+        return (x_pos, y_pos, colors, sizes, quarter, shot_clock, game_clock)
+    
+    def plot_frame(self, frame_number):
+        """
+        Creates an individual frame of game.
+        Outputs .png file in {cwd}/temp
+        
+        Args:
+            frame_number (int): number of frame in game to create
+                frame_number gets player tracking data from moments.ix[frame_number]
+                
+        Returns: an instance of self, and outputs .png file of frame
+            
+        TODO be able to call this method by game time instead of frame_number
+        """
+        (x_pos, y_pos, colors, sizes, quarter, shot_clock, game_clock) = self._get_current_details(frame_number)
+        commentary_script = self._get_commentary(game_time)
+        
         fig = plt.figure(figsize=(12,6))
         self._draw_court()
         frame = plt.gca()
         frame.axes.get_xaxis().set_ticks([])
         frame.axes.get_yaxis().set_ticks([])
-        y_pos -= 50
         plt.scatter(x_pos, y_pos, c=colors, s=sizes, alpha=0.85)
         plt.xlim(-5, 100)
         plt.ylim(-55, 5)
