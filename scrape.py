@@ -45,6 +45,7 @@ class Game(object):
                 'positions', 'game_time'].
                 moments['positions'] contains a list of where each player and the ball
                 are located.
+            player_ids (dict): dictionary of {player: player_id} for all players in game
             team_colors (dict): dictionary of colors for each team and ball.  Used for ploting.
         """
         self.date = date
@@ -55,9 +56,11 @@ class Game(object):
         self.game_id = None
         self.pbp = None
         self.moments = None
+        self.player_ids = None
         self._get_tracking_data()
         self._get_playbyplay_data()
         self._format_tracking_data()
+        self._get_player_ids()
         self.away_id = self.moments.ix[0].positions[1][0]
         self.home_id = self.moments.ix[0].positions[6][0]
         self.team_colors = {-1: "orange",
@@ -119,6 +122,22 @@ class Game(object):
         self.pbp['SCORE'] = self.pbp['SCORE'].fillna(method='ffill').fillna('0 - 0')
         return self
         
+    def _get_player_ids(self):
+        """
+        Helper function for returning player id given player name.
+        """
+        ids = {}
+        for index, row in self.pbp.iterrows():
+            if row['PLAYER1_NAME'] not in ids:
+                ids[row['PLAYER1_NAME']] = row['PLAYER1_ID']
+            if row['PLAYER2_NAME'] not in ids:
+                ids[row['PLAYER2_NAME']] = row['PLAYER2_ID']
+            if row['PLAYER3_NAME'] not in ids:
+                ids[row['PLAYER3_NAME']] = row['PLAYER3_ID']
+        ids.pop(None)
+        self.player_ids = ids
+        return self
+
     def _format_tracking_data(self):
         """
         Heler function to format tracking data into pandas DataFrame
@@ -356,7 +375,7 @@ a.watch_play(200, 1)
 
 
 class loaded(object):
-    def __init__(self, moments, pbp, home_team, away_team):
+    def __init__(self, moments, pbp, home_team, away_team, player_ids):
         self.moments = moments
         self.pbp = pbp
         self.team_colors = {-1: sns.xkcd_rgb["amber"],
@@ -364,81 +383,8 @@ class loaded(object):
                       self.moments.ix[0].positions[6][0]: sns.xkcd_rgb["pale red"]}
         self.home_team = home_team
         self.away_team = away_team
-
-    def plot_frame(self, frame_number):
-        """
-        """
-        current_moment = self.moments.ix[frame_number]
-        game_time = int(np.round(current_moment['game_time']))
-        fig = plt.figure(figsize=(12,6))
-        #plt.figure()
-        self._draw_court()
-        x_pos = []
-        y_pos = []
-        colors = []
-        sizes = []
-        # Get player positions
-        for player in current_moment.positions:
-            x_pos.append(player[2])
-            y_pos.append(player[3])
-            colors.append(self.team_colors[player[0]])
-            # Use ball height for size (useful to see a shot)
-            if player[0]==-1:
-                sizes.append(max(150 - 2*(player[4]-5)**2, 10))
-            else:
-                sizes.append(200)
-        # Get recent play by play moves (from 10 previous seconds)
-        commentary = ['.', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ']
-        count = 0
-        for game_second in range(game_time - 10, game_time + 2):
-            for index, row in self.pbp[self.pbp.game_time == game_second].iterrows():
-                if row['HOMEDESCRIPTION']:
-                    commentary[count] = '{self.home_team}: '.format(self=self) + str(row['HOMEDESCRIPTION'])
-                    count += 1
-                if row['VISITORDESCRIPTION']:
-                    commentary[count] = '{self.away_team}: '.format(self=self) + str(row['VISITORDESCRIPTION'])
-                    count += 1
-                if row['NEUTRALDESCRIPTION']:
-                    commentary[count] = str(row['NEUTRALDESCRIPTION'])
-                    count += 1
-                score = str(row['SCORE'])
-        commentary_script = """{commentary[0]}
-                                \n{commentary[1]} 
-                                \n{commentary[2]} 
-                                \n{commentary[3]} 
-                                \n{commentary[4]} 
-                                \n{commentary[5]}
-                                """.format(commentary=commentary)
+        self.player_ids = player_ids
         
-        # Get quarter, game clock, shot clock
-        shot_clock = current_moment.shot_clock
-        if np.isnan(shot_clock) :
-            shot_clock = 24.00
-        shot_clock = str(shot_clock).split('.')[0]
-        game_min, game_sec = divmod(current_moment.quarter_time, 60)
-        game_clock = "%02d:%02d" % (game_min, game_sec)
-        quarter = current_moment.quarter
-        print(shot_clock, game_clock, quarter)
-        y_pos = np.array(y_pos)
-        frame = plt.gca()
-        frame.axes.get_xaxis().set_ticks([])
-        frame.axes.get_yaxis().set_ticks([])
-        y_pos -= 50
-        plt.scatter(x_pos, y_pos, c=colors, s=sizes, alpha=0.85)
-        plt.xlim(-5, 100)
-        plt.ylim(-55, 5)
-        sns.set_style('dark')
-        plt.figtext(0.23, -.6, commentary_script, size=20)
-        plt.figtext(0.43, 0.13, shot_clock, size=18)
-        plt.figtext(0.5, 0.13, 'Q'+str(quarter), size=18)
-        plt.figtext(0.57, 0.13, str(game_clock), size=18)
-        plt.figtext(0.43, .85, self.away_team + "  " + score + "  " + self.home_team, size = 18)
-        #plt.title(commentary_script, size=20)
-        plt.savefig('temp/{frame_number}.png'.format(frame_number=frame_number),bbox_inches='tight')
-        plt.show()
-        plt.close()
-        return self
-
     def _draw_court(self, color="gray", lw=2, grid=False, zorder=0):
         """
         Helper function to draw court.
@@ -514,9 +460,103 @@ class loaded(object):
 
         return ax
 
-b=loaded(a.moments, a.pbp, a.home_team, a.away_team)
+    def plot_frame(self, frame_number):
+        """
+        """
+        current_moment = self.moments.ix[frame_number]
+        game_time = int(np.round(current_moment['game_time']))
+        fig = plt.figure(figsize=(12,6))
+        #plt.figure()
+        self._draw_court()
+        x_pos = []
+        y_pos = []
+        colors = []
+        sizes = []
+        # Get player positions
+        for player in current_moment.positions:
+            x_pos.append(player[2])
+            y_pos.append(player[3])
+            colors.append(self.team_colors[player[0]])
+            # Use ball height for size (useful to see a shot)
+            if player[0]==-1:
+                sizes.append(max(150 - 2*(player[4]-5)**2, 10))
+            else:
+                sizes.append(200)
+        # Get recent play by play moves (from 10 previous seconds)
+        commentary = ['.', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ']
+        count = 0
+        for game_second in range(game_time - 10, game_time + 2):
+            for index, row in self.pbp[self.pbp.game_time == game_second].iterrows():
+                if row['HOMEDESCRIPTION']:
+                    commentary[count] = '{self.home_team}: '.format(self=self) + str(row['HOMEDESCRIPTION'])
+                    count += 1
+                if row['VISITORDESCRIPTION']:
+                    commentary[count] = '{self.away_team}: '.format(self=self) + str(row['VISITORDESCRIPTION'])
+                    count += 1
+                if row['NEUTRALDESCRIPTION']:
+                    commentary[count] = str(row['NEUTRALDESCRIPTION'])
+                    count += 1
+                score = str(row['SCORE'])
+        commentary_script = """{commentary[0]}
+                                \n{commentary[1]} 
+                                \n{commentary[2]} 
+                                \n{commentary[3]} 
+                                \n{commentary[4]} 
+                                \n{commentary[5]}
+                                """.format(commentary=commentary)
+        
+        # Get quarter, game clock, shot clock
+        shot_clock = current_moment.shot_clock
+        if np.isnan(shot_clock) :
+            shot_clock = 24.00
+        shot_clock = str(shot_clock).split('.')[0]
+        game_min, game_sec = divmod(current_moment.quarter_time, 60)
+        game_clock = "%02d:%02d" % (game_min, game_sec)
+        quarter = current_moment.quarter
+        print(shot_clock, game_clock, quarter)
+        y_pos = np.array(y_pos)
+        frame = plt.gca()
+        frame.axes.get_xaxis().set_ticks([])
+        frame.axes.get_yaxis().set_ticks([])
+        y_pos -= 50
+        plt.scatter(x_pos, y_pos, c=colors, s=sizes, alpha=0.85)
+        plt.xlim(-5, 100)
+        plt.ylim(-55, 5)
+        sns.set_style('dark')
+        plt.figtext(0.23, -.6, commentary_script, size=20)
+        plt.figtext(0.43, 0.13, shot_clock, size=18)
+        plt.figtext(0.5, 0.13, 'Q'+str(quarter), size=18)
+        plt.figtext(0.57, 0.13, str(game_clock), size=18)
+        plt.figtext(0.43, .85, self.away_team + "  " + score + "  " + self.home_team, size = 18)
+        #plt.title(commentary_script, size=20)
+        plt.savefig('temp/{frame_number}.png'.format(frame_number=frame_number),bbox_inches='tight')
+        plt.show()
+        plt.close()
+        return self
+        
+    
+    def _get_player_actions(self, player_name, action, length=15):
+        """
+        player_name (str): name of player to get all actions for
+        action {'all_FT', 'made_FT', 'miss_FT', 'rebound'}: Type of action to get all times for.
+        length (int): length of video for each action (seconds)
+        """
+        action_dict = {'all_FT': [1, 2], 'made_FT': [1], 'miss_FT': [2], 'rebound': [4]}
+        ### Needs work.  Currently borked
+        action_df = self.pbp[self.pbp['PLAYER1_ID']['EVENTMSGTYPE'].isin(action_dict[action])]
+        print(action_df)
+        return 
+    
+    def watch_player_actions(self, player_name, action):
+        """
+        
+        """
+        return
 
-#b.plot_frame(20000)
+b=loaded(a.moments, a.pbp, a.home_team, a.away_team, a.player_ids)
+b._get_player_actions("Damian Lillard", 'all_FT')
+
+
 #b.plot_frame(301)
 
 # http://opiateforthemass.es/articles/animate-nba-shot-events/
