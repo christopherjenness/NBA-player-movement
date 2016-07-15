@@ -58,9 +58,11 @@ class Game(object):
         self._get_tracking_data()
         self._get_playbyplay_data()
         self._format_tracking_data()
+        self.away_id = self.moments.ix[0].positions[1][0]
+        self.home_id = self.moments.ix[0].positions[6][0]
         self.team_colors = {-1: "orange",
-                            self.moments.ix[0].positions[1][0]: "blue",
-                            self.moments.ix[0].positions[6][0]: "red"} 
+                            self.away_id: "blue",
+                            self.home_id: "red"} 
         print('All data is loaded')
     
     def _get_tracking_data(self):
@@ -339,7 +341,8 @@ class Game(object):
         plt.figtext(0.5, 0.125, 'Q'+str(quarter), size=18)
         plt.figtext(0.57, 0.125, str(game_clock), size=18)
         plt.figtext(0.43, .85, self.away_team + "  " + score + "  " + self.home_team, size = 18)
-        #plt.title(commentary_script, size=20)
+        plt.scatter([30, 67], [2.5, 2.5], s=100, 
+                     c=[self.team_colors[self.away_id], self.team_colors[self.home_id]])
         plt.savefig('temp/{frame_number}.png'.format(frame_number=frame_number),bbox_inches='tight')
         plt.close()
         return self
@@ -513,6 +516,7 @@ class loaded(object):
 
 b=loaded(a.moments, a.pbp, a.home_team, a.away_team)
 
+#b.plot_frame(20000)
 #b.plot_frame(301)
 
 # http://opiateforthemass.es/articles/animate-nba-shot-events/
