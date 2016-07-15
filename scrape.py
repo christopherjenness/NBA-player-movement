@@ -33,7 +33,6 @@ class Game(object):
             date (str): 'MM.DD.YYYY', date of game
             home_team (str): 'XXX', abbreviation of home team
             away_team (str): 'XXX', abbreviation of away team
-            team_colors (dict): dictionary of colors for each team and ball.  Used for ploting.
             tracking_id (str): id to access player tracking data
                 Due to the way the SportVU data is stored, game_id is 
                 complicated: 'MM.DD.YYYY.AWAYTEAM.at.HOMETEAM'
@@ -46,13 +45,11 @@ class Game(object):
                 'positions', 'game_time'].
                 moments['positions'] contains a list of where each player and the ball
                 are located.
+            team_colors (dict): dictionary of colors for each team and ball.  Used for ploting.
         """
         self.date = date
         self.home_team = home_team
         self.away_team = away_team
-        self.team_colors = {-1: "orange",
-                            self.moments.ix[0].positions[1][0]: "blue",
-                            self.moments.ix[0].positions[6][0]: "red"}        
         self.tracking_id = '{self.date}.{self.away_team}.at.{self.home_team}'.format(self=self)
         self.tracking_data = None
         self.game_id = None
@@ -61,6 +58,9 @@ class Game(object):
         self._get_tracking_data()
         self._get_playbyplay_data()
         self._format_tracking_data()
+        self.team_colors = {-1: "orange",
+                            self.moments.ix[0].positions[1][0]: "blue",
+                            self.moments.ix[0].positions[6][0]: "red"} 
         print('All data is loaded')
     
     def _get_tracking_data(self):
@@ -68,10 +68,10 @@ class Game(object):
         Helper function for retrieving tracking data
         """
         # Retrive and extract Data into /temp folder
-        datalink = """https://raw.githubusercontent.com/neilmj/BasketballData/master/
-                      2016.NBA.Raw.SportVU.Game.Logs/{self.tracking_id}.7z""".format(self=self)
-        os.system("curl {datalink} -o {os.getcwd()}/temp/zipdata".format(datalink=datalink, os=os)) 
-        os.system("7za -o./temp x {os.getcwd()} /temp/zipdata".format(os=os)) 
+        datalink = ("https://raw.githubusercontent.com/neilmj/BasketballData/master/"
+                     "2016.NBA.Raw.SportVU.Game.Logs/{self.tracking_id}.7z").format(self=self)
+        os.system("curl {datalink} -o temp/zipdata".format(datalink=datalink)) 
+        os.system("7za -o./temp x temp/zipdata") 
         os.remove("./temp/zipdata")
         
         # Extract game ID from extracted file name.
@@ -129,7 +129,7 @@ class Game(object):
                 moments.append(inner_row)
         moments = pd.DataFrame(moments)
         moments = moments.drop_duplicates(subset=[1])
-        moments = moments.reset_index()asdf
+        moments = moments.reset_index()
         
         moments.columns = ['index', 'quarter', 'universe_time', 'quarter_time', 
                            'shot_clock', 'unknown', 'positions']
@@ -236,9 +236,11 @@ class Game(object):
                 commentary_depth=10 looks at previous 10 seconds of game for play-by-play calls
             
         Returns:
-            str: string of commentary (most recent play-by-play calls, seperated by line breaks)
+            commentary_script (str): string of commentary 
+                Most recent play-by-play calls, seperated by line breaks
+            score (str): Score at current time 'XX - XX'
         """
-        commentary = [' 'for i in range(commentary_length)]]
+        commentary = [' 'for i in range(commentary_length)]
         commentary[0] = '.'
         count = 0
         for game_second in range(game_time - commentary_depth, game_time + 2):
@@ -262,7 +264,7 @@ class Game(object):
                                 \n{commentary[4]} 
                                 \n{commentary[5]}
                                 """.format(commentary=commentary)
-        return commentary_script
+        return (commentary_script, score)
         
     def _get_moment_details(self, frame_number):
         """
@@ -273,6 +275,7 @@ class Game(object):
                 frame_number gets player tracking data from moments.ix[frame_number]
                 
         Returns: tuple of data
+            game_time (int): seconds into game of current moment
             x_pos (list): list of x coordinants for all players and ball
             y_pos (list): list of y coordinants for all players and ball
             colors (list): color coding of each player/ball for coordinant data
@@ -305,7 +308,7 @@ class Game(object):
         game_min, game_sec = divmod(current_moment.quarter_time, 60)
         game_clock = "%02d:%02d" % (game_min, game_sec)
         quarter = current_moment.quarter
-        return (x_pos, y_pos, colors, sizes, quarter, shot_clock, game_clock)
+        return (game_time, x_pos, y_pos, colors, sizes, quarter, shot_clock, game_clock)
     
     def plot_frame(self, frame_number):
         """
@@ -320,9 +323,8 @@ class Game(object):
             
         TODO be able to call this method by game time instead of frame_number
         """
-        (x_pos, y_pos, colors, sizes, quarter, shot_clock, game_clock) = self._get_current_details(frame_number)
-        commentary_script = self._get_commentary(game_time)
-        
+        (game_time, x_pos, y_pos, colors, sizes, quarter, shot_clock, game_clock) = self._get_moment_details(frame_number)
+        (commentary_script, score) = self._get_commentary(game_time)
         fig = plt.figure(figsize=(12,6))
         self._draw_court()
         frame = plt.gca()
@@ -518,6 +520,7 @@ b=loaded(a.moments, a.pbp, a.home_team, a.away_team)
    
         
         
+
 
 
 
