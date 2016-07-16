@@ -124,7 +124,7 @@ class Game(object):
         
     def _get_player_ids(self):
         """
-        Helper function for returning player id given player name.
+        Helper function for returning player ids for all players in game.
         """
         ids = {}
         for index, row in self.pbp.iterrows():
@@ -241,7 +241,7 @@ class Game(object):
         
         #Delete images
         for file in os.listdir('./temp'):
-            if os.path.splitext(file) == '.png':
+            if os.path.splitext(file)[1] == '.png':
                 os.remove('./temp/{file}'.format(file=file))
 
         return self
@@ -264,6 +264,7 @@ class Game(object):
         commentary = [' 'for i in range(commentary_length)]
         commentary[0] = '.'
         count = 0
+        score = "0 - 0"
         for game_second in range(game_time - commentary_depth, game_time + 2):
             for index, row in self.pbp[self.pbp.game_time == game_second].iterrows():
                 if row['HOMEDESCRIPTION']:
@@ -361,14 +362,14 @@ class Game(object):
         plt.figtext(0.57, 0.125, str(game_clock), size=18)
         plt.figtext(0.43, .85, self.away_team + "  " + score + "  " + self.home_team, size = 18)
         plt.scatter([30, 67], [2.5, 2.5], s=100, 
-                     c=[self.team_colors[self.away_id], self.team_colors[self.home_id]])
+                     c=[self.team_colors[self.home_id], self.team_colors[self.away_id]])
         plt.savefig('temp/{frame_number}.png'.format(frame_number=frame_number),bbox_inches='tight')
         plt.close()
         return self
         
 a = Game('01.03.2016', 'DEN', 'POR') 
 
-a.watch_play(200, 1)
+a.watch_play(800, 120)
 
 #a.watch_play(game_time=0,   length=2)
 
@@ -534,18 +535,19 @@ class loaded(object):
         plt.close()
         return self
         
+        
     
     def _get_player_actions(self, player_name, action, length=15):
         """
         player_name (str): name of player to get all actions for
-        action {'all_FT', 'made_FT', 'miss_FT', 'rebound'}: Type of action to get all times for.
+        action {'all_FG', 'made_FG', 'miss_FG', 'rebound'}: Type of action to get all times for.
         length (int): length of video for each action (seconds)
         """
-        action_dict = {'all_FT': [1, 2], 'made_FT': [1], 'miss_FT': [2], 'rebound': [4]}
-        ### Needs work.  Currently borked
-        action_df = self.pbp[self.pbp['PLAYER1_ID']['EVENTMSGTYPE'].isin(action_dict[action])]
-        print(action_df)
-        return 
+        player_id = self.player_ids[player_name]
+        action_dict = {'all_FG': [1, 2], 'made_FG': [1], 'miss_FG': [2], 'rebound': [4]}
+        action_df = b.pbp[(b.pbp['PLAYER1_ID']==player_id) & (b.pbp['EVENTMSGTYPE'].isin(action_dict[action]))]
+        times = list(action_df['game_time'])
+        return times
     
     def watch_player_actions(self, player_name, action):
         """
@@ -554,10 +556,12 @@ class loaded(object):
         return
 
 b=loaded(a.moments, a.pbp, a.home_team, a.away_team, a.player_ids)
-b._get_player_actions("Damian Lillard", 'all_FT')
+c = b._get_player_actions("Damian Lillard", 'all_FT')
 
 
-#b.plot_frame(301)
+
+
+#b.plot_frame(800)
 
 # http://opiateforthemass.es/articles/animate-nba-shot-events/
 
