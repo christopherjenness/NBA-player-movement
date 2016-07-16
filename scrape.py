@@ -288,7 +288,19 @@ class Game(object):
                                 """.format(commentary=commentary)
         return (commentary_script, score)
         
-    def _get_moment_details(self, frame_number):
+    def _get_player_actions(self, player_name, action, length=15):
+        """
+        player_name (str): name of player to get all actions for
+        action {'all_FG', 'made_FG', 'miss_FG', 'rebound'}: Type of action to get all times for.
+        length (int): length of video for each action (seconds)
+        """
+        player_id = self.player_ids[player_name]
+        action_dict = {'all_FG': [1, 2], 'made_FG': [1], 'miss_FG': [2], 'rebound': [4]}
+        action_df = self.pbp[(self.pbp['PLAYER1_ID']==player_id) & (self.pbp['EVENTMSGTYPE'].isin(action_dict[action]))]
+        times = list(action_df['game_time'])
+        return times
+        
+    def _get_moment_details(self, frame_number, highlight_player=None):
         """
         Returns important information for a given frame
         
@@ -312,6 +324,7 @@ class Game(object):
         y_pos = []
         colors = []
         sizes = []
+        edges = []
         # Get player positions
         for player in current_moment.positions:
             x_pos.append(player[2])
@@ -322,6 +335,10 @@ class Game(object):
                 sizes.append(max(150 - 2*(player[4]-5)**2, 10))
             else:
                 sizes.append(200)
+            if highlight_player and player[1] == self.player_ids[highlight_player]:
+                edges.append(5)
+            else:
+                edges.append(0.5)
         y_pos = np.array(y_pos) - 50
         shot_clock = current_moment.shot_clock
         if np.isnan(shot_clock) :
@@ -330,9 +347,9 @@ class Game(object):
         game_min, game_sec = divmod(current_moment.quarter_time, 60)
         game_clock = "%02d:%02d" % (game_min, game_sec)
         quarter = current_moment.quarter
-        return (game_time, x_pos, y_pos, colors, sizes, quarter, shot_clock, game_clock)
+        return (game_time, x_pos, y_pos, colors, sizes, quarter, shot_clock, game_clock, edges)
     
-    def plot_frame(self, frame_number):
+    def plot_frame(self, frame_number, highlight_player=None):
         """
         Creates an individual frame of game.
         Outputs .png file in {cwd}/temp
@@ -345,14 +362,14 @@ class Game(object):
             
         TODO be able to call this method by game time instead of frame_number
         """
-        (game_time, x_pos, y_pos, colors, sizes, quarter, shot_clock, game_clock) = self._get_moment_details(frame_number)
+        (game_time, x_pos, y_pos, colors, sizes, quarter, shot_clock, game_clock, edges) = self._get_moment_details(frame_number, highlight_player=highlight_player)
         (commentary_script, score) = self._get_commentary(game_time)
         fig = plt.figure(figsize=(12,6))
         self._draw_court()
         frame = plt.gca()
         frame.axes.get_xaxis().set_ticks([])
         frame.axes.get_yaxis().set_ticks([])
-        plt.scatter(x_pos, y_pos, c=colors, s=sizes, alpha=0.85)
+        plt.scatter(x_pos, y_pos, c=colors, s=sizes, alpha=0.85, linewidths=edges)
         plt.xlim(-5, 100)
         plt.ylim(-55, 5)
         sns.set_style('dark')
@@ -361,6 +378,8 @@ class Game(object):
         plt.figtext(0.5, 0.125, 'Q'+str(quarter), size=18)
         plt.figtext(0.57, 0.125, str(game_clock), size=18)
         plt.figtext(0.43, .85, self.away_team + "  " + score + "  " + self.home_team, size = 18)
+        if highlight_player:
+            plt.figtext(0.17, 0.85, highlight_player, size=18)
         plt.scatter([30, 67], [2.5, 2.5], s=100, 
                      c=[self.team_colors[self.home_id], self.team_colors[self.away_id]])
         plt.savefig('temp/{frame_number}.png'.format(frame_number=frame_number),bbox_inches='tight')
@@ -369,9 +388,7 @@ class Game(object):
         
 a = Game('01.03.2016', 'DEN', 'POR') 
 
-a.watch_play(800, 120)
-
-#a.watch_play(game_time=0,   length=2)
+a.plot_frame(800, highlight_player='Jameer Nelson')
 
 
 
@@ -552,7 +569,7 @@ class loaded(object):
         """
         player_id = self.player_ids[player_name]
         action_dict = {'all_FG': [1, 2], 'made_FG': [1], 'miss_FG': [2], 'rebound': [4]}
-        action_df = b.pbp[(b.pbp['PLAYER1_ID']==player_id) & (b.pbp['EVENTMSGTYPE'].isin(action_dict[action]))]
+        action_df = self.pbp[(self.pbp['PLAYER1_ID']==player_id) & (self.pbp['EVENTMSGTYPE'].isin(action_dict[action]))]
         times = list(action_df['game_time'])
         return times
     
