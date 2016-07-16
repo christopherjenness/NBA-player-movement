@@ -461,7 +461,7 @@ class loaded(object):
 
         return ax
 
-    def plot_frame(self, frame_number):
+    def plot_frame(self, frame_number, highlight_player=None):
         """
         """
         current_moment = self.moments.ix[frame_number]
@@ -473,6 +473,7 @@ class loaded(object):
         y_pos = []
         colors = []
         sizes = []
+        edges = []
         # Get player positions
         for player in current_moment.positions:
             x_pos.append(player[2])
@@ -483,6 +484,11 @@ class loaded(object):
                 sizes.append(max(150 - 2*(player[4]-5)**2, 10))
             else:
                 sizes.append(200)
+            if player[1] == self.player_ids[highlight_player]:
+                edges.append(5)
+            else:
+                edges.append(0.5)
+            print (player[1])
         # Get recent play by play moves (from 10 previous seconds)
         commentary = ['.', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ']
         count = 0
@@ -520,7 +526,7 @@ class loaded(object):
         frame.axes.get_xaxis().set_ticks([])
         frame.axes.get_yaxis().set_ticks([])
         y_pos -= 50
-        plt.scatter(x_pos, y_pos, c=colors, s=sizes, alpha=0.85)
+        plt.scatter(x_pos, y_pos, c=colors, s=sizes, alpha=0.85, linewidths=edges)
         plt.xlim(-5, 100)
         plt.ylim(-55, 5)
         sns.set_style('dark')
@@ -529,6 +535,7 @@ class loaded(object):
         plt.figtext(0.5, 0.13, 'Q'+str(quarter), size=18)
         plt.figtext(0.57, 0.13, str(game_clock), size=18)
         plt.figtext(0.43, .85, self.away_team + "  " + score + "  " + self.home_team, size = 18)
+        plt.figtext(0.17, 0.85, highlight_player, size=18)
         #plt.title(commentary_script, size=20)
         plt.savefig('temp/{frame_number}.png'.format(frame_number=frame_number),bbox_inches='tight')
         plt.show()
@@ -556,12 +563,9 @@ class loaded(object):
         return
 
 b=loaded(a.moments, a.pbp, a.home_team, a.away_team, a.player_ids)
-c = b._get_player_actions("Damian Lillard", 'all_FT')
+c = b._get_player_actions("CJ McCollum", 'all_FG')
 
-
-
-
-#b.plot_frame(800)
+b.plot_frame(800, highlight_player="Jameer Nelson")
 
 # http://opiateforthemass.es/articles/animate-nba-shot-events/
 
