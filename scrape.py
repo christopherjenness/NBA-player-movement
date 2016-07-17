@@ -217,7 +217,7 @@ class Game(object):
 
         return ax
 
-    def watch_play(self, game_time, length):
+    def watch_play(self, game_time, length, highlight_player=None):
         """
         Method for viewing plays in game.  
         Outputs video file of play in {cwd}/temp
@@ -233,8 +233,8 @@ class Game(object):
         ending_frame = self.moments[self.moments.game_time.round() == game_time + length].index.values[0]
         
         for frame in range(starting_frame, ending_frame):
-            self.plot_frame(frame)
-        command = 'ffmpeg -framerate 20 -start_number {starting_frame} -i %d.png -c:v libx264 -r 30 -pix_fmt yuv420p -vf "scale=trunc(iw/2)*2:trunc(ih/2)*2" out.mp4'.format(starting_frame=starting_frame)
+            self.plot_frame(frame, highlight_player=highlight_player)
+        command = 'ffmpeg -framerate 20 -start_number {starting_frame} -i %d.png -c:v libx264 -r 30 -pix_fmt yuv420p -vf "scale=trunc(iw/2)*2:trunc(ih/2)*2" {game_time}.mp4'.format(starting_frame=starting_frame, game_time=game_time)
         os.chdir('temp')
         os.system(command) 
         os.chdir('..')
@@ -244,6 +244,16 @@ class Game(object):
             if os.path.splitext(file)[1] == '.png':
                 os.remove('./temp/{file}'.format(file=file))
 
+        return self
+
+    def watch_player_actions(self, player_name, action, length=15, max_vids=5):
+        """
+        """
+        player_action_times = self._get_player_actions(player_name, action)
+        for index, time in enumerate(player_action_times):
+            if index == max_vids:
+                break
+            self.watch_play(time-length, length, highlight_player=player_name)
         return self
 
     def _get_commentary(self, game_time, commentary_length=6, commentary_depth=10):
@@ -288,11 +298,10 @@ class Game(object):
                                 """.format(commentary=commentary)
         return (commentary_script, score)
         
-    def _get_player_actions(self, player_name, action, length=15):
+    def _get_player_actions(self, player_name, action):
         """
         player_name (str): name of player to get all actions for
         action {'all_FG', 'made_FG', 'miss_FG', 'rebound'}: Type of action to get all times for.
-        length (int): length of video for each action (seconds)
         """
         player_id = self.player_ids[player_name]
         action_dict = {'all_FG': [1, 2], 'made_FG': [1], 'miss_FG': [2], 'rebound': [4]}
@@ -388,7 +397,10 @@ class Game(object):
         
 a = Game('01.03.2016', 'DEN', 'POR') 
 
-a.plot_frame(800, highlight_player='Jameer Nelson')
+#a.plot_frame(800, highlight_player='Jameer Nelson')
+a.watch_player_actions('CJ McCollum', 'all_FG', length=2, max_vids=5)
+
+#a.watch_play(1, 5, highlight_player='Jameer Nelson')
 
 
 
@@ -501,7 +513,7 @@ class loaded(object):
                 sizes.append(max(150 - 2*(player[4]-5)**2, 10))
             else:
                 sizes.append(200)
-            if player[1] == self.player_ids[highlight_player]:
+            if highlight_player and player[1] == self.player_ids[highlight_player]:
                 edges.append(5)
             else:
                 edges.append(0.5)
@@ -561,7 +573,7 @@ class loaded(object):
         
         
     
-    def _get_player_actions(self, player_name, action, length=15):
+    def _get_player_actions(self, player_name, action):
         """
         player_name (str): name of player to get all actions for
         action {'all_FG', 'made_FG', 'miss_FG', 'rebound'}: Type of action to get all times for.
@@ -573,16 +585,18 @@ class loaded(object):
         times = list(action_df['game_time'])
         return times
     
-    def watch_player_actions(self, player_name, action):
+    def watch_player_actions(self, player_name, action, length=15, max_vids=5):
         """
-        
         """
+        player_action_times = self._get_player_actions(player_name, action)
+        for time in player_action_times:
+            self.plot_frame(time, highlight_player=player_name)
         return
 
 b=loaded(a.moments, a.pbp, a.home_team, a.away_team, a.player_ids)
 c = b._get_player_actions("CJ McCollum", 'all_FG')
 
-b.plot_frame(800, highlight_player="Jameer Nelson")
+#b.plot_frame(800, highlight_player="Jameer Nelson")
 
 # http://opiateforthemass.es/articles/animate-nba-shot-events/
 
