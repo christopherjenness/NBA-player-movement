@@ -801,55 +801,50 @@ class loaded(object):
         plt.close()
         return self
     
-    def set_formation(self, frame_number, home_team=True, offense=True):
+    def _in_formation(self, frame_number):
         """
         This is a complicated method to explain, but it is actually very simple.
-        Given a team (home or away) and a frame in the game, it will determine if the team has a set
-        offense/defense.  It basically returns True if a normal play is being run, and False if the 
-        game is in transition, out of bounds, free throw, etc.  It is useful for analyzing plays that 
-        teams run, and discarding all extranous times from the game.
+        It determines if the game is in a set offense/defense.  
+        It basically returns True if a normal play is being run, and False if the 
+        game is in transition, out of bounds, free throw, etc.  It is useful for 
+        analyzing plays that teams run, and discarding all extranous times from the game.
         """
+        # Get relevant moment details
         details = self._get_moment_details(frame_number)
         x_pos = np.array(details[1])
         quarter = details[5]
-        # Determine if team is on offense/defense.
-        # This is a combinatorial decision that depends on which team, offense/defense and the quarter
-        if home_team and offense and quarter in [1, 2]:
-            if (x_pos[1:6] < 47).all():
-                return True
-        if home_team and not offense and quarter in [1, 2]:
-            if (x_pos[1:6] > 47).all():
-                return True
-        if home_team and offense and quarter in [3, 4]:
-            if (x_pos[1:6] > 47).all():
-                return True
-        if home_team and not offense and quarter in [3, 4]:
-            if (x_pos[1:6] < 47).all():
-                return True
-        if not home_team and offense and quarter in [1, 2]:
-            if (x_pos[6:] > 47).all():
-                return True
-        if not home_team and not offense and quarter in [1, 2]:
-            if (x_pos[6:] < 47).all():
-                return True
-        if not home_team and offense and quarter in [3, 4]:
-            if (x_pos[6:] < 47).all():
-                return True
-        if not home_team and not offense and quarter in [3, 4]:
-            if (x_pos[1:6] > 47).all():
+        shot_clock = details[6]
+        # Determine if offense/defense is set
+        if float(shot_clock) < 23:
+            if (x_pos < 47).all() or (x_pos > 47).all():
                 return True
         return False
+        
+    def get_spacing_area(self, frame_number):        
+        details = self._get_moment_details(frame_number)
+        x_pos = np.array(details[1])
+        y_pos = np.array(details[2])
+        xy_pos = np.column_stack((x_pos, y_pos))
+        home_area = ConvexHull(xy_pos[1:6, :]).area
+        away_area = ConvexHull(xy_pos[6:, :]).area
+        
+        return (home_area, away_area)
+        
 
         
 b = loaded()
-b.plot_frame(1000)
+b.plot_frame(2500)
+b.get_spacing_area(1330)
   
-
-b.set_formation(1000, home_team=True, offense=False)
         
+c = np.arange(10)
+d = np.arange(10)
+e = np.column_stack((c, d))
 
-
-
+points = np.random.rand(30, 2)   # 30 random points in 2-D
+hull = ConvexHull(points)
+hull.vertices
+hull.simplices
 
 
 
