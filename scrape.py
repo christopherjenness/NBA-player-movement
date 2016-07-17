@@ -6,6 +6,25 @@ Library for retrieving basektball player-tracking and play-by-play data.
 # brew install curl
 # brew install ffmpeg --with-libvpx
 
+"""
+# TODO spacing analysis - convex hull of offense (oh interesting.  Maybe the spacing of
+defense is more important for how spaced an offense is.  IF they have someone teed up in the 
+corner, but can't make threes, I guess there spacing doesnt matter.  SO if they are defended deep,
+that seems to be more important to space out the defense.
+
+Perhaps some sort of spacing metric.  SSI: standardized spacing index
+Roadmap:
+- write function to determine if offense or defense (all players on one side of court) need to think
+    about how to handle shots that were just made...and free throws.  Perhaps shot clock?
+- get convex hull of offense and defense 
+- quantitate spacing
+- perhaps quantitate differnce in offense and defensive spacing (it would be hilarious is a teams
+    offense was ridiculously spaced, but the defense didnt care because they can't shoot).
+- plot convex hulls. plot_spacing(frame, offense=True, defense=False) at least.
+- Run SSI for each game/team
+- Write up results.
+"""
+
 import os
 import json
 import pandas as pd
