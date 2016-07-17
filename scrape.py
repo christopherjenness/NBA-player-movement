@@ -32,6 +32,7 @@ import matplotlib.pyplot as plt
 from matplotlib.patches import Circle, Rectangle, Arc
 import numpy as np
 import seaborn as sns
+from scipy.spatial import ConvexHull
 
 os.chdir('/Users/christopherjenness/Desktop/Personal/SportVU/NBA-player-movement')
 os.system('mkdir temp')
@@ -328,7 +329,7 @@ class Game(object):
         times = list(action_df['game_time'])
         return times
         
-    def _get_moment_details(self, frame_number, highlight_player=None):
+    def _get_moment_details(self, frame_number, highlight_player=None, coords_only=False):
         """
         Returns important information for a given frame
         
@@ -375,6 +376,8 @@ class Game(object):
         game_min, game_sec = divmod(current_moment.quarter_time, 60)
         game_clock = "%02d:%02d" % (game_min, game_sec)
         quarter = current_moment.quarter
+        if coords_only:
+            return (x_pos, y_pos)
         return (game_time, x_pos, y_pos, colors, sizes, quarter, shot_clock, game_clock, edges)
     
     def plot_frame(self, frame_number, highlight_player=None):
@@ -618,6 +621,17 @@ c = b._get_player_actions("CJ McCollum", 'all_FG')
 #b.plot_frame(800, highlight_player="Jameer Nelson")
 
 # http://opiateforthemass.es/articles/animate-nba-shot-events/
+
+points = np.random.rand(30, 2)   # 30 random points in 2-D
+hull = ConvexHull(points)
+
+def test():
+    a = 1
+    b = 2
+    c = 3
+    return (a, b, c)
+
+d, e, f = test()
 
    
         
