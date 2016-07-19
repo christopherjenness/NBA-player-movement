@@ -434,7 +434,7 @@ class Game(object):
         """		
         # Get relevant moment details		
         details = self._get_moment_details(frame_number)		
-         x_pos = np.array(details[1])		
+        x_pos = np.array(details[1])		
         quarter = details[5]		
         shot_clock = details[6]		
         # Determine if offense/defense is set		
