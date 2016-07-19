@@ -477,7 +477,7 @@ class Game(object):
         """
         details = self._get_moment_details(frame_number)
         x_pos = np.array(details[1])
-        shot_clock = details[6]	
+        shot_clock = int(details[6])
         quarter = details[5]
         if shot_clock > 22:
             return None
