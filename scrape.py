@@ -424,7 +424,38 @@ class Game(object):
         plt.close()
         return self
 
-    def get_spacing_area(self, frame_number):        
+    def _in_formation(self, frame_number):	
+        """		
+        This is a complicated method to explain, but it is actually very simple.		
+        It determines if the game is in a set offense/defense.  		
+        It basically returns True if a normal play is being run, and False if the 		
+        game is in transition, out of bounds, free throw, etc.  It is useful for 		
+        analyzing plays that teams run, and discarding all extranous times from the game.		
+        """		
+        # Get relevant moment details		
+        details = self._get_moment_details(frame_number)		
+         x_pos = np.array(details[1])		
+        quarter = details[5]		
+        shot_clock = details[6]		
+        # Determine if offense/defense is set		
+        if float(shot_clock) < 23:		
+            if (x_pos < 47).all() or (x_pos > 47).all():		
+                return True		
+        return False
+
+    def get_spacing_area(self, frame_number): 
+        """
+        Calculates convex hull of home and away team for a given frame.
+        Useful for analyzing the spacing of teams.
+
+        Args:
+            frame_number (int): number of frame in game to calculate team convex hulls
+
+        Returns: tuple of data (home_area, away_area)
+            home_area (float): convex hull area of home team
+            away_area (float): convex hull area of away team
+        
+        """
         details = self._get_moment_details(frame_number)
         x_pos = np.array(details[1])
         y_pos = np.array(details[2])
@@ -434,9 +465,22 @@ class Game(object):
         return (home_area, away_area)
     
     def get_offensive_team(self, frame_number):
+        """
+        Determines which team is on offense.
+        Currently only works if team is in set offense or defense.
+
+        Args: 
+            frame_number (int): number of frame in game to determine offensive team
+
+        Returns:
+            str in ['home', 'away']
+        """
         details = self._get_moment_details(frame_number)
         x_pos = np.array(details[1])
+        shot_clock = details[6]	
         quarter = details[5]
+        if shot_clock > 22:
+            return None
         if (x_pos < 47).all() and quarter in [1, 2]:
             return 'home'
         if (x_pos > 47).all() and quarter in [3, 4]:
