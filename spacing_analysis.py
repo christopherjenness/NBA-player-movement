@@ -45,10 +45,21 @@ def get_spacing_statistics(date, home_team, away_team, write_file=False):
 
     return(home_offense_areas, home_defense_areas,
            away_offense_areas, away_defense_areas)
+           
+def plot_spacing(date, home_team, away_team):
+    filename = "{date}-{away_team}-{home_team}".format(date=date, away_team=away_team, home_team=home_team)
+    plt.figure()
+    plt.hist(f[1], bins=100, alpha=0.4, label=home_team)
+    plt.hist(f[3], bins=100, alpha=0.4, label=away_team)
+    plt.xlim(20,100)
+    plt.legend(loc='upper right')
+    plt.show()
+    
+plot_spacing('01.06.2016', 'OKC', 'MEM')
 
 results = get_spacing_statistics('01.06.2016', 'OKC', 'MEM', write_file=True)
 pickle.dump(results,  open( "testr.p", "wb"))
-f = pickle.load(open( "testr.p", "rb" ))
+f = pickle.load(open( "data/spacing/01.06.2016-MEM-OKC", "rb" ))
 home_offense_areas, home_defense_areas, away_offense_areas, away_defense_areas = [], [], [], []
 
 for frame in range(len(test_game.moments)):
@@ -66,8 +77,8 @@ for frame in range(len(test_game.moments)):
         
 
 plt.figure()
-plt.hist(home_defense_areas, bins=100, alpha=0.4, label=test_game.home_team)
-plt.hist(away_defense_areas, bins=100, alpha=0.4, label=test_game.away_team)
+plt.hist(f[1], bins=100, alpha=0.4, label='home')
+plt.hist(f[3], bins=100, alpha=0.4, label='away')
 plt.xlim(20,100)
 plt.legend(loc='upper right')
 
