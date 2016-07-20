@@ -46,42 +46,23 @@ def get_spacing_statistics(date, home_team, away_team, write_file=False):
     return(home_offense_areas, home_defense_areas,
            away_offense_areas, away_defense_areas)
            
-def plot_spacing(date, home_team, away_team):
+def plot_spacing(date, home_team, away_team, defense=True):
     filename = "{date}-{away_team}-{home_team}".format(date=date, away_team=away_team, home_team=home_team)
     plt.figure()
-    plt.hist(f[1], bins=100, alpha=0.4, label=home_team)
-    plt.hist(f[3], bins=100, alpha=0.4, label=away_team)
+    if defense:
+        plt.hist(f[1], bins=100, alpha=0.4, label=home_team)
+        plt.hist(f[3], bins=100, alpha=0.4, label=away_team)
+    else:
+        plt.hist(f[0], bins=100, alpha=0.4, label=home_team)
+        plt.hist(f[1], bins=100, alpha=0.4, label=away_team)
     plt.xlim(20,100)
     plt.legend(loc='upper right')
     plt.show()
     
-plot_spacing('01.06.2016', 'OKC', 'MEM')
+def get_spacing(gamelist):
+    for game in gamelist:
+        get_spacing_statistics(game[0], game[1], game[2], write_file=True)
 
-results = get_spacing_statistics('01.06.2016', 'OKC', 'MEM', write_file=True)
-pickle.dump(results,  open( "testr.p", "wb"))
-f = pickle.load(open( "data/spacing/01.06.2016-MEM-OKC", "rb" ))
-home_offense_areas, home_defense_areas, away_offense_areas, away_defense_areas = [], [], [], []
-
-for frame in range(len(test_game.moments)):
-    offensive_team = test_game.get_offensive_team(frame)
-    if offensive_team == 'home':
-        home_offense_area, away_defense_area = test_game.get_spacing_area(frame)
-        home_offense_areas.append(home_offense_area)
-        away_defense_areas.append(away_defense_area)
-    if offensive_team == 'away':
-        home_defense_area, away_offense_area = test_game.get_spacing_area(frame)
-        home_defense_areas.append(home_defense_area)
-        away_offense_areas.append(away_offense_area)
-    if frame % 1000 == 0:
-        print(frame)
-        
-
-plt.figure()
-plt.hist(f[1], bins=100, alpha=0.4, label='home')
-plt.hist(f[3], bins=100, alpha=0.4, label='away')
-plt.xlim(20,100)
-plt.legend(loc='upper right')
-
-
-np.mean(home_defense_areas)
-np.mean(away_defense_areas)
+if __name__ == "__main__":
+    games = extract_games()
+    get_spacing(games)
