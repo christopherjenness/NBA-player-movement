@@ -41,7 +41,7 @@ def get_spacing_statistics(date, home_team, away_team, write_file=False):
     game = Game(date, home_team, away_team)
     home_offense_areas, home_defense_areas = [], []
     away_offense_areas, away_defense_areas = [], []
-
+    print(date, home_team, away_team)
     for frame in range(len(game.moments)):
         offensive_team = game.get_offensive_team(frame)
         if offensive_team == 'home':
@@ -52,8 +52,6 @@ def get_spacing_statistics(date, home_team, away_team, write_file=False):
             home_defense_area, away_offense_area = game.get_spacing_area(frame)
             home_defense_areas.append(home_defense_area)
             away_offense_areas.append(away_offense_area)
-        if frame % 1000 == 0:
-            print(str(frame) + " / " + str(len(game.moments)))
     results = (home_offense_areas, home_defense_areas,
                away_offense_areas, away_defense_areas)
 
@@ -95,7 +93,10 @@ def write_spacing(gamelist):
     Writes all spacing statistics to data/spacing directory for every game
     """
     for game in gamelist:
-        get_spacing_statistics(game[0], game[1], game[2], write_file=True)
+        try:
+            get_spacing_statistics(game[0], game[1], game[2], write_file=True)
+        except:
+            print(':::::Game failure::::::', game)
 
 if __name__ == "__main__":
     games = extract_games()
