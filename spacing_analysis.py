@@ -100,7 +100,9 @@ def write_spacing(gamelist):
         try:
             get_spacing_statistics(game[0], game[1], game[2], write_file=True)
         except:
-            print(':::::Game failure::::::', game)
+            with open('errorlog.txt', 'a') as myfile:
+                myfile.write("{game} Could not extract spacing data".format(game=game))
+            
 
 if __name__ == "__main__":
     games = extract_games()
