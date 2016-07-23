@@ -4,6 +4,7 @@ import numpy as np
 from scrape import Game
 import pandas as pd
 import pickle
+import os
 
 def extract_games():
     """
@@ -38,6 +39,9 @@ def get_spacing_statistics(date, home_team, away_team, write_file=False):
                away_offense_areas, away_defense_areas), where each element of the tuple
                is a list of convex hull areas for each frame in the game.
     """
+    filename = "{date}-{away_team}-{home_team}.p".format(date=date, away_team=away_team, home_team=home_team)
+    if filename in os.listdir('./data/spacing'):
+        return
     game = Game(date, home_team, away_team)
     home_offense_areas, home_defense_areas = [], []
     away_offense_areas, away_defense_areas = [], []
