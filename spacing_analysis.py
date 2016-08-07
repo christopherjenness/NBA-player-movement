@@ -24,7 +24,7 @@ def extract_games():
             games.append([date, home, away])
     return games
     
-def get_spacing_statistics(date, home_team, away_team, write_file=False):
+def get_spacing_statistics(date, home_team, away_team, write_file=False, write_score=False):
     """
     Calculates spacing statistics for each frame in game
     
@@ -48,24 +48,32 @@ def get_spacing_statistics(date, home_team, away_team, write_file=False):
     print(date, home_team, away_team)
     for frame in range(len(game.moments)):
         offensive_team = game.get_offensive_team(frame)
-        if offensive_team == 'home':
-            home_offense_area, away_defense_area = game.get_spacing_area(frame)
-            home_offense_areas.append(home_offense_area)
-            away_defense_areas.append(away_defense_area)
-        if offensive_team == 'away':
-            home_defense_area, away_offense_area = game.get_spacing_area(frame)
-            home_defense_areas.append(home_defense_area)
-            away_offense_areas.append(away_offense_area)
+        if offensive_team:
+            home_area, away_area = game.get_spacing_area(frame)
+            if offensive_team == 'home':
+                home_offense_areas.append(home_area)
+                away_defense_areas.append(away_area)
+            if offensive_team == 'away':
+                home_defense_areas.append(home_area)
+                away_offense_areas.append(away_area)
     results = (home_offense_areas, home_defense_areas,
                away_offense_areas, away_defense_areas)
 
     if write_file:
         filename = "{date}-{away_team}-{home_team}".format(date=date, away_team=away_team, home_team=home_team)
         pickle.dump(results,  open( 'data/spacing/' + filename + '.p', "wb"))
+    
+    if write_score:
+        score = game.pbp['SCORE'].ix[len(game.pbp) - 1]
+        pickle.dump(score,  open( 'data/score/' + filename + '.p', "wb"))
 
     return(home_offense_areas, home_defense_areas,
            away_offense_areas, away_defense_areas)
-           
+
+
+    
+    
+    
 def plot_spacing(date, home_team, away_team, defense=True):
     """
     Plots team's spacing distrubution in a game.
@@ -98,12 +106,16 @@ def write_spacing(gamelist):
     """
     for game in gamelist:
         try:
-            get_spacing_statistics(game[0], game[1], game[2], write_file=True)
+            get_spacing_statistics(game[0], game[1], game[2], write_file=True, write_score=True)
         except:
             with open('errorlog.txt', 'a') as myfile:
-                myfile.write("{game} Could not extract spacing data".format(game=game))
+                myfile.write("{game} Could not extract spacing data\n".format(game=game))
             
 
 if __name__ == "__main__":
     games = extract_games()
     write_spacing(games)
+    
+
+a = get_spacing_statistics('01.01.2016', 'TOR', 'CHA')
+a = Game('01.01.2016', 'TOR', 'CHA')
