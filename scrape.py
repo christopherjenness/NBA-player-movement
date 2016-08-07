@@ -40,17 +40,17 @@ class Game(object):
     Contains play by play and player tracking data and methods for anaylsis and plotting.
     """
 
-    def __init__(self, date, home_team, away_team):
+    def __init__(self, date, team1, team2):
         """
         Args:
             date (str): 'MM.DD.YYYY', date of game
-            home_team (str): 'XXX', abbreviation of home team
-            away_team (str): 'XXX', abbreviation of away team
+            team1 (str): 'XXX', abbreviation of team1 in data tracking file name
+            team2 (str): 'XXX', abbreviation of team2 in data tracking file name
 
         Attributes:
             date (str): 'MM.DD.YYYY', date of game
-            home_team (str): 'XXX', abbreviation of home team
-            away_team (str): 'XXX', abbreviation of away team
+            team1 (str): 'XXX', abbreviation of team1 in data tracking file name
+            team2 (str): 'XXX', abbreviation of team2 in data tracking file name
             tracking_id (str): id to access player tracking data
                 Due to the way the SportVU data is stored, game_id is
                 complicated: 'MM.DD.YYYY.AWAYTEAM.at.HOMETEAM'
@@ -68,11 +68,13 @@ class Game(object):
             away_id (int): ID of away team
             home_id (int): ID of home team
             team_colors (dict): dictionary of colors for each team and ball.  Used for ploting.
+            home_team (str): 'XXX', abbreviation of home team
+            away_team (str): 'XXX', abbreviation of away team
         """
         self.date = date
-        self.home_team = home_team
-        self.away_team = away_team
-        self.tracking_id = '{self.date}.{self.away_team}.at.{self.home_team}'.format(self=self)
+        self.team1 = team1
+        self.team2 = team2
+        self.tracking_id = '{self.date}.{self.team2}.at.{self.team1}'.format(self=self)
         self.tracking_data = None
         self.game_id = None
         self.pbp = None
@@ -82,11 +84,13 @@ class Game(object):
         self._get_playbyplay_data()
         self._format_tracking_data()
         self._get_player_ids()
-        self.away_id = self.moments.ix[0].positions[6][0]
-        self.home_id = self.moments.ix[0].positions[1][0]
+        self.away_id = self.tracking_data['events'][0]['visitor']['teamid']
+        self.home_id = self.tracking_data['events'][0]['home']['teamid']
         self.team_colors = {-1: "orange",
                             self.away_id: "blue",
                             self.home_id: "red"}
+        self.home_team = self.tracking_data['events'][0]['home']['abbreviation']
+        self.away_team = self.tracking_data['events'][0]['visitor']['abbreviation']
         print('All data is loaded')
 
     def _get_tracking_data(self):
@@ -206,7 +210,7 @@ class Game(object):
         l_corner_b = Rectangle((0, -47), 14, 0, lw=lw, color=color, zorder=zorder)
         r_corner_a = Rectangle((80, -3), 14, 0, lw=lw, color=color, zorder=zorder)
         r_corner_b = Rectangle((80, -47), 14, 0, lw=lw, color=color, zorder=zorder)
-        l_arc = Arc((5,c-25), 47.5, 47.5, theta1=292, theta2=68, lw=lw, color=color, zorder=zorder)
+        l_arc = Arc((5, -25), 47.5, 47.5, theta1=292, theta2=68, lw=lw, color=color, zorder=zorder)
         r_arc = Arc((89, -25), 47.5, 47.5, theta1=112, theta2=248, lw=lw, color=color, zorder=zorder)
         half_court = Rectangle((47, -50), 0, 50, lw=lw, color=color, zorder=zorder)
         hc_big_circle = Circle((47, -25), radius=6, lw=lw, fill=False, color=color, zorder=zorder)
@@ -378,7 +382,7 @@ class Game(object):
         y_pos = np.array(y_pos) - 50
         shot_clock = current_moment.shot_clock
         if np.isnan(shot_clock):
-            shot_clock = 24.00
+            shot_clock=24.00
         shot_clock = str(shot_clock).split('.')[0]
         game_min, game_sec = divmod(current_moment.quarter_time, 60)
         game_clock = "%02d:%02d" % (game_min, game_sec)
@@ -479,7 +483,7 @@ class Game(object):
         x_pos = np.array(details[1])
         shot_clock = int(details[6])
         quarter = details[5]
-        if shot_clock > 22:
+        if shot_clock > 22 or len(x_pos) != 11:
             return None
         if (x_pos < 47).all() and quarter in [1, 2]:
             return 'home'
