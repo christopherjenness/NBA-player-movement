@@ -509,22 +509,26 @@ class Game(object):
     
     def _determine_direction(self):
         incorrect_count = 0
+        correct_count = 0
         for frame in range(500):
             offensive_team = self.get_offensive_team(frame)
             home_area, away_area = self.get_spacing_area(frame)
             if home_area < away_area and offensive_team == 'home':
                 incorrect_count += 1
-            if away_area < home_area and offensive_team == 'away':
+            elif away_area < home_area and offensive_team == 'away':
                 incorrect_count += 1
-        if incorrect_count > 200:
+            elif offensive_team:
+                correct_count += 1
+        if incorrect_count > correct_count:
             self.flip_direction = True
         
 
 a = Game('01.01.2016', 'TOR', 'CHA')
-#a.plot_frame(1100)
-
-a = Game('01.01.2016', 'MIA', 'DAL')
+a.plot_frame(1100)
+a.flip_direction
+#a = Game('01.01.2016', 'MIA', 'DAL')
 #a.plot_frame(10000)
+
 
 
 
