@@ -74,6 +74,7 @@ class Game(object):
         self.date = date
         self.team1 = team1
         self.team2 = team2
+        self.flip_direction = False
         self.tracking_id = '{self.date}.{self.team2}.at.{self.team1}'.format(self=self)
         self.tracking_data = None
         self.game_id = None
@@ -91,6 +92,8 @@ class Game(object):
                             self.home_id: "red"}
         self.home_team = self.tracking_data['events'][0]['home']['abbreviation']
         self.away_team = self.tracking_data['events'][0]['visitor']['abbreviation']
+        self.flip_direction = False
+        self._determine_direction()
         print('All data is loaded')
 
     def _get_tracking_data(self):
@@ -485,6 +488,15 @@ class Game(object):
         quarter = details[5]
         if shot_clock > 22 or len(x_pos) != 11:
             return None
+        if self.flip_direction:
+            if (x_pos < 47).all() and quarter in [1, 2]:
+                return 'away'
+            if (x_pos > 47).all() and quarter in [3, 4]:
+                return 'away'
+            if (x_pos < 47).all() and quarter in [3, 4]:
+                return 'home'
+            if (x_pos > 47).all() and quarter in [1, 2]:
+                return 'home'
         if (x_pos < 47).all() and quarter in [1, 2]:
             return 'home'
         if (x_pos > 47).all() and quarter in [3, 4]:
@@ -494,3 +506,27 @@ class Game(object):
         if (x_pos > 47).all() and quarter in [1, 2]:
             return 'away'
         return None
+    
+    def _determine_direction(self):
+        incorrect_count = 0
+        for frame in range(500):
+            offensive_team = self.get_offensive_team(frame)
+            home_area, away_area = self.get_spacing_area(frame)
+            if home_area < away_area and offensive_team == 'home':
+                incorrect_count += 1
+            if away_area < home_area and offensive_team == 'away':
+                incorrect_count += 1
+        if incorrect_count > 200:
+            self.flip_direction = True
+        
+
+a = Game('01.01.2016', 'TOR', 'CHA')
+#a.plot_frame(1100)
+
+a = Game('01.01.2016', 'MIA', 'DAL')
+#a.plot_frame(10000)
+
+
+
+
+
