@@ -24,7 +24,7 @@ def extract_games():
             games.append([date, home, away])
     return games
     
-def get_spacing_statistics(date, home_team, away_team, write_file=False, write_score=False):
+def get_spacing_statistics(date, home_team, away_team, write_file=False, write_score=False, write_game=False):
     """
     Calculates spacing statistics for each frame in game
     
@@ -43,6 +43,8 @@ def get_spacing_statistics(date, home_team, away_team, write_file=False, write_s
     if filename in os.listdir('./data/spacing'):
         return
     game = Game(date, home_team, away_team)
+    if write_game:
+        pickle.dump(game, open( 'data/game/' + filename, "wb"))
     home_offense_areas, home_defense_areas = [], []
     away_offense_areas, away_defense_areas = [], []
     print(date, home_team, away_team)
@@ -69,11 +71,18 @@ def get_spacing_statistics(date, home_team, away_team, write_file=False, write_s
 
     return(home_offense_areas, home_defense_areas,
            away_offense_areas, away_defense_areas)
+           
+def write_spacing(gamelist):
+    """
+    Writes all spacing statistics to data/spacing directory for every game
+    """
+    for game in gamelist:
+        try:
+            get_spacing_statistics(game[0], game[1], game[2], write_file=True, write_score=True, write_game=True)
+        except:
+            with open('errorlog.txt', 'a') as myfile:
+                myfile.write("{game} Could not extract spacing data\n".format(game=game))
 
-
-    
-    
-    
 def plot_spacing(date, home_team, away_team, defense=True):
     """
     Plots team's spacing distrubution in a game.
@@ -100,22 +109,46 @@ def plot_spacing(date, home_team, away_team, defense=True):
     plt.legend(loc='upper right')
     plt.show()
     
-def write_spacing(gamelist):
+def get_spacing_details(game):
     """
-    Writes all spacing statistics to data/spacing directory for every game
+    
     """
-    for game in gamelist:
-        try:
-            get_spacing_statistics(game[0], game[1], game[2], write_file=True, write_score=True)
-        except:
-            with open('errorlog.txt', 'a') as myfile:
-                myfile.write("{game} Could not extract spacing data\n".format(game=game))
-            
+    fname = "{game[0]}-{game[2]}-{game[1]}.p".format(game=game)
+    if fname in os.listdir('data/spacing') and fname in os.listdir('data/score'):
+        data = pickle.load(open( "data/spacing/"+fname, "rb" ))
+        score = pickle.load(open( "data/score/"+fname, "rb" )).split(' ')
+        away_points, home_points = score[0], score[2]
+        means = tuple(map(lambda x: np.mean(x), data))
+        return (int(home_points), int(away_points), *means)
+    else:
+        return None
+
+def get_spacing_df(gamelist):
+    details = []
+    for game in game_list:
+        detail = get_spacing_details(game)
+        if detail:
+            details.append((*detail,game[1], game[2]) )
+    df = pd.DataFrame(details)
+    df.columns = ['home_points', 'away_points', 'home_offense_areas',
+                         'home_defense_areas', 'away_offense_areas', 'away_defense_areas',
+                         'away_team', 'home_team']
+    df['space_dif'] = df.away_defense_areas - df.home_defense_areas
+    df['home_win'] = np.sign(df.home_points - df.away_points)
+    df = df[df.home_offense_areas >80]
+    return df
+
+def plot_offense_vs_defense_spacing(spacing_data):
+    plt.figure()
+    sns.regplot(spacing_data.away_offense_areas, spacing_data.home_defense_areas, fit_reg=True, color=sns.color_palette()[0], ci=None)
+    sns.regplot(spacing_data.home_offense_areas, spacing_data.away_defense_areas, fit_reg=False, color=sns.color_palette()[0], ci=None)
+    plt.xlabel('Average Offensive Spacing (sq ft)', fontsize=16)
+    plt.ylabel('Average Defensive Spacing (sq ft)', fontsize=16)
+    plt.title('Offensive spacing robustly induces defensive spacing')
 
 if __name__ == "__main__":
     games = extract_games()
-    write_spacing(games)
+    #write_spacing(games)
+    spacing_data = get_spacing_df(games)
+    plot_offense_vs_defense_spacing(spacing_data)
     
-
-a = get_spacing_statistics('01.01.2016', 'TOR', 'CHA')
-a = Game('01.01.2016', 'TOR', 'CHA')
