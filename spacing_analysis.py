@@ -1,5 +1,6 @@
-import matplotlib.pyplot as plt
 import seaborn as sns
+import matplotlib.pyplot as plt
+from sklearn import linear_model
 import numpy as np
 from scrape import Game
 import pandas as pd
@@ -125,7 +126,7 @@ def get_spacing_details(game):
 
 def get_spacing_df(gamelist):
     details = []
-    for game in game_list:
+    for game in gamelist:
         detail = get_spacing_details(game)
         if detail:
             details.append((*detail,game[1], game[2]) )
@@ -139,16 +140,78 @@ def get_spacing_df(gamelist):
     return df
 
 def plot_offense_vs_defense_spacing(spacing_data):
-    plt.figure()
     sns.regplot(spacing_data.away_offense_areas, spacing_data.home_defense_areas, fit_reg=True, color=sns.color_palette()[0], ci=None)
     sns.regplot(spacing_data.home_offense_areas, spacing_data.away_defense_areas, fit_reg=False, color=sns.color_palette()[0], ci=None)
     plt.xlabel('Average Offensive Spacing (sq ft)', fontsize=16)
     plt.ylabel('Average Defensive Spacing (sq ft)', fontsize=16)
-    plt.title('Offensive spacing robustly induces defensive spacing')
+    plt.title('Offensive spacing robustly induces defensive spacing', fontsize=16)
+    
+def plot_defense_spacing_vs_score(spacing_data):
+    y = spacing_data.home_points - spacing_data.away_points
+    x = spacing_data.away_defense_areas - spacing_data.home_defense_areas
+    sns.regplot(x, y, ci=False)
+    plt.xlabel(' Home Team Defensive Spacing Differential (sq ft)', fontsize=16)
+    plt.ylabel('Home Team Score Differential (pts)', fontsize=16)
+    plt.title('Spacing the defense correlates with outscoring opponents', fontsize=16)
+    
+def plot_defense_spacing_vs_wins(spacing_data):
+    clf = linear_model.LogisticRegression(C=1)
+    X = np.array(spacing_data.space_dif)
+    X = X[:, np.newaxis]
+    y = np.array(spacing_data.home_win)
+    y_adjusted = (y+1) / 2
+    clf.fit(X, y)
+    plt.scatter(X.ravel(), y_adjusted, color=sns.color_palette()[0], s=600, alpha=1, marker='|' )
+    plt.xlim(-10, 10)
+    X_test = np.linspace(-10, 10, 300)
+    X_test = X_test[:, np.newaxis]
+    clf.predict(X_test)
+    amount = X_test * clf.coef_ 
+    def model(x):
+        return 1 / (1 + np.exp(-x))
+    loss = model(X_test * clf.coef_ + clf.intercept_).ravel()
+    plt.scatter(X_test.ravel(), loss)
+    plt.xlabel('Home Team Defensive Spacing Differential (sq ft)', fontsize=16)
+    plt.ylabel('Home Team Win', fontsize=16)
+    plt.title('Spacing the Defense Correlates with winning', fontsize=16)
+
+def plot_team_defensive_spacing(spacing_data):
+    df=pd.DataFrame()
+    df['home']  = spacing_data.groupby('home_team')['away_defense_areas'].sum()
+    df['home_count'] = spacing_data.groupby('home_team')['away_defense_areas'].count()
+    df['away'] = spacing_data.groupby('away_team')['home_defense_areas'].sum()
+    df['away_count'] = spacing_data.groupby('away_team')['home_defense_areas'].count()
+    df['average_induced_space'] = (df.home + df.away) / (df.away_count + df.home_count)
+    df['average_induced_space'].sort_values().plot(kind='bar', color=sns.color_palette()[0])
+    plt.xlabel('Team', fontsize=16)
+    plt.ylabel("Opponent's Defensive Spacing", fontsize=16)
+    plt.ylim(60,70)
+
+def plot_teams_ability_to_space_defense(spacing_data):
+    df=pd.DataFrame()
+    df['home']  = spacing_data.groupby('home_team')['away_defense_areas'].sum()
+    df['home_count'] = spacing_data.groupby('home_team')['away_defense_areas'].count()
+    df['away'] = spacing_data.groupby('away_team')['home_defense_areas'].sum()
+    df['away_count'] = spacing_data.groupby('away_team')['home_defense_areas'].count()
+    df['average_induced_space'] = (df.home + df.away) / (df.away_count + df.home_count)
+    
+    df['home_offense']  = spacing_data.groupby('home_team')['home_offense_areas'].sum()
+    df['home_offesne_count'] = spacing_data.groupby('home_team')['home_offense_areas'].count()
+    df['away_offense'] = spacing_data.groupby('away_team')['away_offense_areas'].sum()
+    df['away_count'] = spacing_data.groupby('away_team')['away_offense_areas'].count()
+
+    plt.xlabel('Team', fontsize=16)
+    plt.ylabel("Opponent's Defensive Spacing", fontsize=16)
+    plt.ylim(60,70)
+
 
 if __name__ == "__main__":
     games = extract_games()
     #write_spacing(games)
     spacing_data = get_spacing_df(games)
-    plot_offense_vs_defense_spacing(spacing_data)
+    #plot_offense_vs_defense_spacing(spacing_data)
+    #plot_defense_spacing_vs_score(spacing_data)
+    #plot_defense_spacing_vs_wins(spacing_data)
+    #plot_team_defensive_spacing(spacing_data)
+
     
