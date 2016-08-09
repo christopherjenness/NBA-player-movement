@@ -371,7 +371,7 @@ class Game(object):
             x_pos.append(player[2])
             y_pos.append(player[3])
             colors.append(self.team_colors[player[0]])
-            # Use ball height for size (useful to see a shot)
+            # Use ball height for size (useful to sevie a shot)
             if player[0] == -1:
                 sizes.append(max(150 - 2*(player[4] - 5)**2, 10))
             else:
