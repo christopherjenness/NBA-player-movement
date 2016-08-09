@@ -1,5 +1,12 @@
 """"
 Analysis of NBA player velocities.
+
+TODO: 
+- Fix spacing on plot
+- split by team colors
+- individual player velocities
+- Fix all hacks
+- analysis
 """
 
 import numpy as np
@@ -30,12 +37,17 @@ def calculate_velocities(game, frame):
     delta_coordinants = zip(delta_x, delta_y)
     distance_traveled = map(lambda coords: np.linalg.norm(coords), delta_coordinants)
     time_frame = 40 #Fix this value (need to update _get_moment_details to include universe time)
-    # Note, universe time is in msec, I believe. 
-    velocity = map(lambda distances: distances / time_frame, distance_traveled)
-    total_velocity = sum(velocity)
-    if total_velocity > 0.4:
-        return 0
-    return total_velocity
+    # Note, universe time is in msec
+    velocity = list(map(lambda distances: distances / time_frame, distance_traveled))
+    # Check if home team and away team are assigned correctly
+    home_velocity = sum(velocity[1:6])
+    away_velocity = sum(velocity[6:])
+    # Fix the following numbers
+    if home_velocity > 0.4:
+        home_velocity = 0
+    if away_velocity > 0.4:
+        away_velocity = 0
+    return (home_velocity, away_velocity)
 
 def plot_velocity_frame(game, frame_number, ax, highlight_player=None):
     """
@@ -74,13 +86,15 @@ def plot_velocity_frame(game, frame_number, ax, highlight_player=None):
 def watch_play_velocities(game, start_frame, length):
     end_frame = start_frame + 200 # Need to calculate this properly from length
     indices = list(range(end_frame - start_frame))
-    velocities = [calculate_velocities(game, frame) for frame in range(start_frame, end_frame)]
+    home_velocities = [calculate_velocities(game, frame)[0] for frame in range(start_frame, end_frame)]
+    away_velocities = [calculate_velocities(game, frame)[1] for frame in range(start_frame, end_frame)]
     for index, frame in enumerate(range(start_frame, end_frame)):
         f, (ax1, ax2) = plt.subplots(2, figsize=(12,12))
         plot_velocity_frame(game, frame, ax=ax2)
         ax1.set_xlim([0, len(indices)])
         ax1.set_ylim([0, 0.4]) #need to actually set
-        ax1.scatter(indices[:index+1], velocities[:index+1])
+        ax1.scatter(indices[:index+1], home_velocities[:index+1], c=game.team_colors[game.home_id])
+        ax1.scatter(indices[:index+1], away_velocities[:index+1], c=game.team_colors[game.away_id])
         plt.savefig('temp/' + str(index) + '.png')
         plt.close()
     
@@ -96,7 +110,7 @@ def watch_play_velocities(game, start_frame, length):
             os.remove('./temp/{file}'.format(file=file))
 
     
-watch_play_velocities(game, 1150, 10)
+watch_play_velocities(game, 1000, 10)
 
     
     
