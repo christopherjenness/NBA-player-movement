@@ -7,6 +7,7 @@ from scrape import Game
 import matplotlib.pyplot as plt
 import pickle
 import seaborn as sns
+import os
 
 """
 One time dump of game:
@@ -35,8 +36,6 @@ def calculate_velocities(game, frame):
     if total_velocity > 0.4:
         return 0
     return total_velocity
-    
-calculate_velocities(game, 1150)
 
 def plot_velocity_frame(game, frame_number, ax, highlight_player=None):
     """
@@ -73,21 +72,31 @@ def plot_velocity_frame(game, frame_number, ax, highlight_player=None):
 
 
 def watch_play_velocities(game, start_frame, length):
-    end_frame = start_frame + 3 # Need to calculate this properly from length
+    end_frame = start_frame + 200 # Need to calculate this properly from length
     indices = list(range(end_frame - start_frame))
     velocities = [calculate_velocities(game, frame) for frame in range(start_frame, end_frame)]
     for index, frame in enumerate(range(start_frame, end_frame)):
         f, (ax1, ax2) = plt.subplots(2, figsize=(12,12))
         plot_velocity_frame(game, frame, ax=ax2)
-        ax1.scatter(indices[:index], velocities[:index])
-        plt.show()
+        ax1.set_xlim([0, len(indices)])
+        ax1.set_ylim([0, 0.4]) #need to actually set
+        ax1.scatter(indices[:index+1], velocities[:index+1])
+        plt.savefig('temp/' + str(index) + '.png')
+        plt.close()
+    
+    # Make video of each frame
+    command = 'ffmpeg -framerate 20 -start_number 0 -i %d.png -c:v libx264 -r 30 -pix_fmt yuv420p -vf "scale=trunc(iw/2)*2:trunc(ih/2)*2" {start_frame}.mp4'.format(start_frame=start_frame)
+    os.chdir('temp')
+    os.system(command)
+    os.chdir('..')
+
+    #Delete images
+    for file in os.listdir('./temp'):
+        if os.path.splitext(file)[1] == '.png':
+            os.remove('./temp/{file}'.format(file=file))
 
     
 watch_play_velocities(game, 1150, 10)
-    
-    
-
-game.plot_frame(1150)
 
     
     
