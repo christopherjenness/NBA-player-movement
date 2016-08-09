@@ -7,19 +7,17 @@ Library for retrieving basektball player-tracking and play-by-play data.
 # brew install ffmpeg --with-libvpx
 
 """
-TODO spacing analysis - convex hull of offense (oh interesting.  Maybe the spacing of
-defense is more important for how spaced an offense is.  IF they have someone teed up in the 
-corner, but can't make threes, I guess there spacing doesnt matter.  SO if they are defended deep,
-that seems to be more important to space out the defense.
+TODO velocity analysis.  Does average offensive velocity have impact on points scored?  
+Also visualization of velocity during play (team and player)
 
-Perhaps some sort of spacing metric.  SSI: standardized spacing index
 Roadmap:
-- quantitate spacing
-- perhaps quantitate differnce in offense and defensive spacing (it would be hilarious is a teams
-    offense was ridiculously spaced, but the defense didnt care because they can't shoot).
-- plot convex hulls. plot_spacing(frame, offense=True, defense=False) at least.
-- Run SSI for each game/team
-- Write up results.
+- Fix home-away team direction algorithm (only ~90% accurate right now).  I can fix this by looking at the spacing data.
+- Readme file
+- Velocity Analysis scripts
+- Documentation
+- Velocity by quarter? or just compare 1st and 4th quarter
+- Clean up movies
+- One more analysis
 """
 
 import os
@@ -99,6 +97,7 @@ class Game(object):
     def _get_tracking_data(self):
         """
         Helper function for retrieving tracking data
+        Tracking Data is provided by NBA.com, hosted at: https://www.github.com/neilmj
         """
         # Retrive and extract Data into /temp folder
         datalink = ("https://raw.githubusercontent.com/neilmj/BasketballData/master/"
@@ -120,7 +119,9 @@ class Game(object):
 
     def _get_playbyplay_data(self):
         """
-        Helper function for retrieving tracking data
+        Helper function for retrieving play-by-play data.
+        Play-by-play data is obtained via API call to NBA.com
+        This service is likely to go down at any moment and ruin this whole project.
         """
         # stats.nba.com API call
         os.system('curl "http://stats.nba.com/stats/playbyplayv2?'
@@ -385,7 +386,7 @@ class Game(object):
         y_pos = np.array(y_pos) - 50
         shot_clock = current_moment.shot_clock
         if np.isnan(shot_clock):
-            shot_clock=24.00
+            shot_clock = 24.00
         shot_clock = str(shot_clock).split('.')[0]
         game_min, game_sec = divmod(current_moment.quarter_time, 60)
         game_clock = "%02d:%02d" % (game_min, game_sec)
@@ -425,32 +426,32 @@ class Game(object):
         plt.figtext(0.43, .85, self.away_team + "  " + score + "  " + self.home_team, size=18)
         if highlight_player:
             plt.figtext(0.17, 0.85, highlight_player, size=18)
-        plt.scatter([30, 67], [2.5, 2.5], s=100, 
+        # Add team color indicators to top of frame
+        plt.scatter([30, 67], [2.5, 2.5], s=100,
                     c=[self.team_colors[self.away_id], self.team_colors[self.home_id]])
         plt.savefig('temp/{frame_number}.png'.format(frame_number=frame_number), bbox_inches='tight')
         plt.close()
         return self
 
-    def _in_formation(self, frame_number):	
-        """		
-        This is a complicated method to explain, but it is actually very simple.		
-        It determines if the game is in a set offense/defense.  		
-        It basically returns True if a normal play is being run, and False if the 		
-        game is in transition, out of bounds, free throw, etc.  It is useful for 		
-        analyzing plays that teams run, and discarding all extranous times from the game.		
-        """		
-        # Get relevant moment details		
-        details = self._get_moment_details(frame_number)		
-        x_pos = np.array(details[1])		
-        quarter = details[5]		
-        shot_clock = details[6]		
-        # Determine if offense/defense is set		
-        if float(shot_clock) < 23:		
-            if (x_pos < 47).all() or (x_pos > 47).all():		
-                return True		
+    def _in_formation(self, frame_number):
+        """
+        This is a complicated method to explain, but it is actually very simple.
+        It determines if the game is in a set offense/defense.
+        It basically returns True if a normal play is being run, and False if the
+        game is in transition, out of bounds, free throw, etc.  It is useful for
+        analyzing plays that teams run, and discarding all extranous times from the game.
+        """
+        # Get relevant moment details
+        details = self._get_moment_details(frame_number)
+        x_pos = np.array(details[1])
+        shot_clock = details[6]
+        # Determine if offense/defense is set
+        if float(shot_clock) < 23:
+            if (x_pos < 47).all() or (x_pos > 47).all():
+                return True
         return False
 
-    def get_spacing_area(self, frame_number): 
+    def get_spacing_area(self, frame_number):
         """
         Calculates convex hull of home and away team for a given frame.
         Useful for analyzing the spacing of teams.
@@ -461,7 +462,7 @@ class Game(object):
         Returns: tuple of data (home_area, away_area)
             home_area (float): convex hull area of home team
             away_area (float): convex hull area of away team
-        
+
         """
         details = self._get_moment_details(frame_number)
         x_pos = np.array(details[1])
@@ -470,13 +471,13 @@ class Game(object):
         home_area = ConvexHull(xy_pos[1:6, :]).area
         away_area = ConvexHull(xy_pos[6:, :]).area
         return (home_area, away_area)
-    
+
     def get_offensive_team(self, frame_number):
         """
         Determines which team is on offense.
         Currently only works if team is in set offense or defense.
 
-        Args: 
+        Args:
             frame_number (int): number of frame in game to determine offensive team
 
         Returns:
@@ -506,8 +507,14 @@ class Game(object):
         if (x_pos > 47).all() and quarter in [1, 2]:
             return 'away'
         return None
-    
+
     def _determine_direction(self):
+        """
+        Helper funcation to determine which direction the home team is going.
+        Surprisingly, this is not consistent and depends on the game.
+        Currently, this method detects which side the players start on and is
+        ~90% accurate
+        """
         incorrect_count = 0
         correct_count = 0
         for frame in range(500):
@@ -521,16 +528,4 @@ class Game(object):
                 correct_count += 1
         if incorrect_count > correct_count:
             self.flip_direction = True
-        
-
-a = Game('01.01.2016', 'TOR', 'CHA')
-a.plot_frame(1100)
-a.flip_direction
-#a = Game('01.01.2016', 'MIA', 'DAL')
-#a.plot_frame(10000)
-
-
-
-
-
-
+        return None
