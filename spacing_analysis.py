@@ -9,7 +9,7 @@ import numpy as np
 import seaborn as sns
 import matplotlib.pyplot as plt
 from sklearn import linear_model
-from scrape import Game
+from game import Game
 
 def extract_games():
     """
