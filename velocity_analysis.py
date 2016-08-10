@@ -3,7 +3,6 @@ Analysis of NBA player velocities.
 
 TODO: 
 - Fix spacing on plot
-- split by team colors
 - individual player velocities
 - Fix all hacks
 - analysis
@@ -95,10 +94,12 @@ def watch_play_velocities(game, start_frame, length):
         plot_velocity_frame(game, frame, ax=ax2)
         ax1.set_xlim([0, len(indices)])
         ax1.set_ylim([0, max_velocity * 1.2]) 
-        ax1.plot(indices[:index+1], home_velocities[:index+1], c=game.team_colors[game.home_id])
-        ax1.plot(indices[:index+1], away_velocities[:index+1], c=game.team_colors[game.away_id])
+        ax1.plot(indices[:index+1], home_velocities[:index+1], c=game.team_colors[game.home_id], label=game.home_team)
+        ax1.plot(indices[:index+1], away_velocities[:index+1], c=game.team_colors[game.away_id], label=game.away_team)
         ax1.set_yticklabels([])
         ax1.set_xticklabels([])
+        ax1.set_ylabel('Velocity', fontsize=20)
+        ax1.legend()
         plt.savefig('temp/' + str(index) + '.png')
         plt.close()
     
