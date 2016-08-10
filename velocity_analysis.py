@@ -15,6 +15,7 @@ import matplotlib.pyplot as plt
 import pickle
 import seaborn as sns
 import os
+from scipy.interpolate import interp1d
 
 """
 One time dump of game:
@@ -84,17 +85,20 @@ def plot_velocity_frame(game, frame_number, ax, highlight_player=None):
 
 
 def watch_play_velocities(game, start_frame, length):
-    end_frame = start_frame + 200 # Need to calculate this properly from length
+    end_frame = start_frame + 10 # Need to calculate this properly from length
     indices = list(range(end_frame - start_frame))
     home_velocities = [calculate_velocities(game, frame)[0] for frame in range(start_frame, end_frame)]
     away_velocities = [calculate_velocities(game, frame)[1] for frame in range(start_frame, end_frame)]
+    max_velocity = max(home_velocities + away_velocities)
     for index, frame in enumerate(range(start_frame, end_frame)):
         f, (ax1, ax2) = plt.subplots(2, figsize=(12,12))
         plot_velocity_frame(game, frame, ax=ax2)
         ax1.set_xlim([0, len(indices)])
-        ax1.set_ylim([0, 0.4]) #need to actually set
-        ax1.scatter(indices[:index+1], home_velocities[:index+1], c=game.team_colors[game.home_id])
-        ax1.scatter(indices[:index+1], away_velocities[:index+1], c=game.team_colors[game.away_id])
+        ax1.set_ylim([0, max_velocity * 1.2]) 
+        ax1.plot(indices[:index+1], home_velocities[:index+1], c=game.team_colors[game.home_id])
+        ax1.plot(indices[:index+1], away_velocities[:index+1], c=game.team_colors[game.away_id])
+        ax1.set_yticklabels([])
+        ax1.set_xticklabels([])
         plt.savefig('temp/' + str(index) + '.png')
         plt.close()
     
@@ -110,7 +114,9 @@ def watch_play_velocities(game, start_frame, length):
             os.remove('./temp/{file}'.format(file=file))
 
     
-watch_play_velocities(game, 1000, 10)
+watch_play_velocities(game, 1000, 1)
+
 
     
     
+
