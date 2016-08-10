@@ -2,6 +2,7 @@
 Analysis of NBA player velocities.
 
 TODO: 
+- Show player annotation somewhere when highlight_player
 - individual player velocities
 - analysis
 """
@@ -12,7 +13,6 @@ import matplotlib.pyplot as plt
 import pickle
 import seaborn as sns
 import os
-from scipy.interpolate import interp1d
 
 """
 One time dump of game:
@@ -129,9 +129,11 @@ def watch_play_velocities(game, game_time, length, highlight_player=None):
             ax1.plot(indices[:index+1], away_velocities[:index+1], c=game.team_colors[game.away_id], label=game.away_team)
         ax1.set_yticklabels([])
         ax1.set_xticklabels([])
-        ax1.set_ylabel('Velocity', fontsize=20)
-        if not highlight_player:
-            ax1.legend()
+        ax1.set_ylabel('Velocity', fontsize=22)
+        if highlight_player:
+            ax1.set_title(highlight_player, fontsize=24)
+        else:
+            ax1.legend(fontsize=18)
         plt.savefig('temp/' + str(index) + '.png')
         plt.close()
     
@@ -147,9 +149,9 @@ def watch_play_velocities(game, game_time, length, highlight_player=None):
             os.remove('./temp/{file}'.format(file=file))
 
     
-#watch_play_velocities(game, 52, 2, highlight_player='Nicolas Batum')
+watch_play_velocities(game, 52, 2, highlight_player='Nicolas Batum')
 
-watch_play_velocities(game, 52, 2)
+watch_play_velocities(game, 53, 2)
 
 
     
