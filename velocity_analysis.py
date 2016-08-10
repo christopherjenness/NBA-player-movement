@@ -33,8 +33,6 @@ def calculate_velocities(game, frame, highlight_player=None):
     # Highlighed player's edge value (details[8]) is 5 instead of 0.5
     # Use this fact to retrieve the index of the player
     
-    print (details[8])
-    
     if highlight_player:
         if 5 in details[8]:
             player_index = details[8].index(5)
@@ -93,12 +91,11 @@ def plot_velocity_frame(game, frame_number, ax, highlight_player=None):
     plt.xlim(-5, 100)
     plt.ylim(-55, 5)
     sns.set_style('dark')
-    plt.figtext(0.43, 0.129, shot_clock, size=18)
-    plt.figtext(0.5, 0.129, 'Q'+str(quarter), size=18)
-    plt.figtext(0.57, 0.129, str(game_clock), size=18)
-    plt.figtext(0.43, .454, game.away_team + "  " + score + "  " + game.home_team, size=18)
-    if highlight_player:
-        plt.figtext(0.17, 0.85, highlight_player, size=18)
+    plt.figtext(0.43, 0.105, shot_clock, size=18)
+    plt.figtext(0.5, 0.105, 'Q'+str(quarter), size=18)
+    plt.figtext(0.57, 0.105, str(game_clock), size=18)
+    plt.figtext(0.43, .442, game.away_team + "  " + score + "  " + game.home_team, size=18)
+
     # Add team color indicators to top of frame
     ax.scatter([30, 67], [2.5, 2.5], s=100,
                 c=[game.team_colors[game.away_id], game.team_colors[game.home_id]])
@@ -110,22 +107,31 @@ def watch_play_velocities(game, game_time, length, highlight_player=None):
     ending_frame = game.moments[game.moments.game_time.round() == game_time + length].index.values[0]
         
     indices = list(range(ending_frame - starting_frame))
-    home_velocities = [calculate_velocities(game, frame)[0] for frame in range(starting_frame, ending_frame)]
-    away_velocities = [calculate_velocities(game, frame)[1] for frame in range(starting_frame, ending_frame)]
-    max_velocity = max(home_velocities + away_velocities)
+    
+    if highlight_player:
+        player_velocities = [calculate_velocities(game, frame, highlight_player=highlight_player) for frame in range(starting_frame, ending_frame)]
+        max_velocity = max(player_velocities)
+    else:
+        home_velocities = [calculate_velocities(game, frame)[0] for frame in range(starting_frame, ending_frame)]
+        away_velocities = [calculate_velocities(game, frame)[1] for frame in range(starting_frame, ending_frame)]
+        max_velocity = max(home_velocities + away_velocities)
     
     # Plot each frame
     for index, frame in enumerate(range(starting_frame, ending_frame)):
         f, (ax1, ax2) = plt.subplots(2, figsize=(12,12))
-        plot_velocity_frame(game, frame, ax=ax2)
+        plot_velocity_frame(game, frame, ax=ax2, highlight_player=highlight_player)
         ax1.set_xlim([0, len(indices)])
         ax1.set_ylim([0, max_velocity * 1.2]) 
-        ax1.plot(indices[:index+1], home_velocities[:index+1], c=game.team_colors[game.home_id], label=game.home_team)
-        ax1.plot(indices[:index+1], away_velocities[:index+1], c=game.team_colors[game.away_id], label=game.away_team)
+        if highlight_player:
+            ax1.plot(indices[:index+1], player_velocities[:index+1], c='black', label=highlight_player)
+        else:
+            ax1.plot(indices[:index+1], home_velocities[:index+1], c=game.team_colors[game.home_id], label=game.home_team)
+            ax1.plot(indices[:index+1], away_velocities[:index+1], c=game.team_colors[game.away_id], label=game.away_team)
         ax1.set_yticklabels([])
         ax1.set_xticklabels([])
         ax1.set_ylabel('Velocity', fontsize=20)
-        ax1.legend()
+        if not highlight_player:
+            ax1.legend()
         plt.savefig('temp/' + str(index) + '.png')
         plt.close()
     
@@ -141,9 +147,22 @@ def watch_play_velocities(game, game_time, length, highlight_player=None):
             os.remove('./temp/{file}'.format(file=file))
 
     
+#watch_play_velocities(game, 52, 2, highlight_player='Nicolas Batum')
+
 watch_play_velocities(game, 52, 2)
 
 
     
     
+
+
+
+
+
+
+
+
+
+
+
 
