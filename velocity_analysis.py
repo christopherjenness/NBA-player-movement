@@ -17,14 +17,24 @@ import pickle
 import seaborn as sns
 import os
 
-"""
-One time dump of game:
+def extract_games():
+    """
+    Extract games from allgames.txt
 
-game = Game('01.01.2016', 'TOR', 'CHA')
-pickle.dump(game, open('data/game/temp.p', 'wb'))
-"""
+    Returns:
+        list: list of games.  Each element is list is [date, home_team, away_team]
+        example element: ['01.01.2016', 'TOR', 'CHI']
+    """
 
-game = pickle.load(open('data/game/temp.p', 'rb'))
+    games = []
+    with open('allgames.txt', 'r') as game_file:
+        for line in game_file:
+            game = line.split('.')
+            date = "{game[0]}.{game[1]}.{game[2]}".format(game=game)
+            away = game[3]
+            home = game[5]
+            games.append([date, home, away])
+    return games
 
 def calculate_velocities(game, frame, highlight_player=None):
     """
@@ -32,6 +42,7 @@ def calculate_velocities(game, frame, highlight_player=None):
     """
     details = game._get_moment_details(frame, highlight_player=highlight_player)
     previous_details = game._get_moment_details(frame - 1)
+    game_time = details[9]
     
     # Highlighed player's edge value (details[8]) is 5 instead of 0.5
     # Use this fact to retrieve the index of the player
@@ -45,10 +56,10 @@ def calculate_velocities(game, frame, highlight_player=None):
     if frame == 0:
         if highlight_player:
             return 0
-        return (0, 0)
+        return (game_time, 0, 0)
 
     if len(details[1]) != 11 or len(details[2]) != 11 or len(previous_details[1]) != 11 or len(previous_details[2]) != 11:
-        return 0
+        return (game_time, 0, 0)
     delta_x = np.array(details[1]) - np.array(previous_details[1])
     delta_y = np.array(details[2]) - np.array(previous_details[2])
     delta_coordinants = zip(delta_x, delta_y)
@@ -57,7 +68,7 @@ def calculate_velocities(game, frame, highlight_player=None):
     # Note, universe time is in msec
     velocity = list(map(lambda distances: distances / delta_time, distance_traveled))
     if highlight_player:
-        return velocity[player_index]
+        return (game_time, velocity[player_index])
     # Check if home team and away team are assigned correctly
     home_velocity = sum(velocity[1:6])
     away_velocity = sum(velocity[6:])
@@ -65,11 +76,8 @@ def calculate_velocities(game, frame, highlight_player=None):
     if home_velocity > 0.4:
         home_velocity = 0
     if away_velocity > 0.4:
-        away_velocity = 0
-    return (home_velocity, away_velocity)
-
-calculate_velocities(game, 10, highlight_player='Nicolas Batum')
-calculate_velocities(game, 10)
+        away_velocity = 0, 0
+    return (game_time, home_velocity, away_velocity)
 
 def plot_velocity_frame(game, frame_number, ax, highlight_player=None):
     """
@@ -113,11 +121,11 @@ def watch_play_velocities(game, game_time, length, highlight_player=None):
     indices = list(range(ending_frame - starting_frame))
     
     if highlight_player:
-        player_velocities = [calculate_velocities(game, frame, highlight_player=highlight_player) for frame in range(starting_frame, ending_frame)]
+        player_velocities = [calculate_velocities(game, frame, highlight_player=highlight_player)[1] for frame in range(starting_frame, ending_frame)]
         max_velocity = max(player_velocities)
     else:
-        home_velocities = [calculate_velocities(game, frame)[0] for frame in range(starting_frame, ending_frame)]
-        away_velocities = [calculate_velocities(game, frame)[1] for frame in range(starting_frame, ending_frame)]
+        home_velocities = [calculate_velocities(game, frame)[1] for frame in range(starting_frame, ending_frame)]
+        away_velocities = [calculate_velocities(game, frame)[2] for frame in range(starting_frame, ending_frame)]
         max_velocity = max(home_velocities + away_velocities)
     
     # Plot each frame
@@ -182,16 +190,16 @@ def get_velocity_statistics(date, home_team, away_team, write_file=False,
     home_offense_velocities, home_defense_velocities = [], []
     away_offense_velocities, away_defense_velocities = [], []
     print(date, home_team, away_team)
-    for frame in range(len(game.moments)):
+    for frame in range(1, len(game.moments)):
         offensive_team = game.get_offensive_team(frame)
         if offensive_team:
-            home_velocity, away_velocity = calculate_velocities(game, frame)
+            game_time, home_velocity, away_velocity = calculate_velocities(game, frame)
             if offensive_team == 'home':
-                home_offense_velocities.append(home_velocity)
-                away_defense_velocities.append(away_velocity)
+                home_offense_velocities.append((frame, game_time, home_velocity))
+                away_defense_velocities.append((frame, game_time, away_velocity))
             if offensive_team == 'away':
-                home_defense_velocities.append(home_velocity)
-                away_offense_velocities.append(away_velocity)
+                home_defense_velocities.append((frame, game_time, home_velocity))
+                away_offense_velocities.append((frame, game_time, away_velocity))
     results = (home_offense_velocities, home_defense_velocities,
                away_offense_velocities, away_defense_velocities)
     # Write spacing data to disk
@@ -205,21 +213,32 @@ def get_velocity_statistics(date, home_team, away_team, write_file=False,
 
     return (home_offense_velocities, home_defense_velocities,
             away_offense_velocities, away_defense_velocities)
+            
+def write_spacing(gamelist):
+    """
+    Writes all spacing statistics to data/spacing directory for each game
+    """
+    for game in gamelist:
+        try:
+            get_velocity_statistics(game[0], game[1], game[2], write_file=True)
+        except:
+            with open('errorlog_velocity.txt', 'a') as myfile:
+                myfile.write("{game} Could not extract velocity data\n".format(game=game))
 
     
-#watch_play_velocities(game, 52, 2, highlight_player='Nicolas Batum')
-#watch_play_velocities(game, 53, 2)
 
+if __name__ == "__main__":
+    """
+    """
 
-    
-    
-
-
-
-
-
-
-
+    all_games = extract_games()
+    write_spacing(all_games)
+    #spacing_data = get_spacing_df(all_games)
+    #plot_offense_vs_defense_spacing(spacing_data)
+    #plot_defense_spacing_vs_score(spacing_data)
+    #plot_defense_spacing_vs_wins(spacing_data)
+    #plot_team_defensive_spacing(spacing_data)
+    #plot_teams_ability_to_space_defense(spacing_data)
 
 
 
