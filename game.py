@@ -11,14 +11,11 @@ TODO velocity analysis.  Does average offensive velocity have impact on points s
 Also visualization of velocity during play (team and player)
 
 Roadmap:
-- Fix home-away team direction algorithm (only ~90% accurate right now).  I can fix this by looking at the spacing data.
 - Readme file
 - Velocity Analysis scripts
-- Documentation
 - Velocity by quarter? or just compare 1st and 4th quarter
 - Clean up movies
 - One more analysis
-- Maybe figure out direction by using the first made basket, and determine which side of the court the majority of players are on.
 """
 
 import os
@@ -364,9 +361,11 @@ class Game(object):
             game_clock (str): game clock
             edges (list): list of marker edge sizes of each player for video.
                 useful when trying to highlight a player by making their edge thicker.
+            universe_time (int): Time in the universe, in msec
         """
         current_moment = self.moments.ix[frame_number]
         game_time = int(np.round(current_moment['game_time']))
+        universe_time = int(current_moment['universe_time'])
         x_pos, y_pos, colors, sizes, edges = [], [], [], [], []
         # Get player positions
         for player in current_moment.positions:
@@ -392,7 +391,7 @@ class Game(object):
         game_min, game_sec = divmod(current_moment.quarter_time, 60)
         game_clock = "%02d:%02d" % (game_min, game_sec)
         quarter = current_moment.quarter
-        return (game_time, x_pos, y_pos, colors, sizes, quarter, shot_clock, game_clock, edges)
+        return (game_time, x_pos, y_pos, colors, sizes, quarter, shot_clock, game_clock, edges, universe_time)
 
     def plot_frame(self, frame_number, highlight_player=None, commentary=True):
         """
@@ -410,7 +409,7 @@ class Game(object):
 
         TODO be able to call this method by game time instead of frame_number
         """
-        (game_time, x_pos, y_pos, colors, sizes, quarter, shot_clock, game_clock, edges) = self._get_moment_details(frame_number, highlight_player=highlight_player)
+        (game_time, x_pos, y_pos, colors, sizes, quarter, shot_clock, game_clock, edges, universe_time) = self._get_moment_details(frame_number, highlight_player=highlight_player)
         (commentary_script, score) = self._get_commentary(game_time)
         fig = plt.figure(figsize=(12, 6))
         self._draw_court()
@@ -532,3 +531,15 @@ class Game(object):
             self.flip_direction = True
         print (correct_count, incorrect_count)
         return None
+    
+    def get_frame(self, game_time):
+        frame = self.moments[self.moments.game_time.round() == game_time].index.values[0]
+        return frame
+
+"""
+game = Game('01.01.2016', 'TOR', 'CHA')
+pickle.dump('temp/game/temp.p', open('data/game/temp.p', 'wb'))
+game.pbp.head()
+game.get_frame(19)
+game.plot_frame(295)
+"""
