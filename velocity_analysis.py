@@ -5,10 +5,13 @@ TODO:
 - Show player annotation somewhere when highlight_player
 - individual player velocities
 - analysis
+- 1st vs 4th quarter? (measure of tiredness) - compare points made in 1st vs 4th quarter
+- compare velocities before made and missed shots
+- display a no-velocity vs high-velocity play
 """
 
 import numpy as np
-from scrape import Game
+from game import Game
 import matplotlib.pyplot as plt
 import pickle
 import seaborn as sns
@@ -148,10 +151,63 @@ def watch_play_velocities(game, game_time, length, highlight_player=None):
         if os.path.splitext(file)[1] == '.png':
             os.remove('./temp/{file}'.format(file=file))
 
-    
-watch_play_velocities(game, 52, 2, highlight_player='Nicolas Batum')
+def get_velocity_statistics(date, home_team, away_team, write_file=False,
+                           write_score=False, write_game=False):
+    """
+    Calculates velocity statistics for each frame in game
 
-watch_play_velocities(game, 53, 2)
+    Args:
+        date (str): date of game in form 'MM.DD.YYYY'.  Example: '01.01.2016'
+        home_team (str): home team in form 'XXX'. Example: 'TOR'
+        away_team (str): away team in form 'XXX'. Example: 'CHI'
+        write_file (bool): If True, write pickle file of spacing statistics into data/velocity directory
+        write_score (bool): If True, write pickle file of game score into data/score directory
+        write_game (bool): If True, write pickle file of tracking data into data/game directory
+            Note: This file is ~100MB.
+
+    Returns:
+        tuple: tuple of data (home_offense_velocities, home_defense_velocities,
+               away_offense_velocities, away_defense_velocities), where each element of the tuple
+               is a list of tuples (frame, game_time, velocity) for each frame in the game.
+    """
+    filename = "{date}-{away_team}-{home_team}.p".format(date=date, away_team=away_team, home_team=home_team)
+    # Do not recalculate spacing data if already saved to disk
+    if filename in os.listdir('./data/velocity/'):
+        return
+    game = Game(date, home_team, away_team)
+    # Write game data to disk
+    if write_game:
+        pickle.dump(game, open('data/game/' + filename, "wb"))
+    home_offense_velocities, home_defense_velocities = [], []
+    away_offense_velocities, away_defense_velocities = [], []
+    print(date, home_team, away_team)
+    for frame in range(len(game.moments)):
+        offensive_team = game.get_offensive_team(frame)
+        if offensive_team:
+            home_velocity, away_velocity = calculate_velocities(game, frame)
+            if offensive_team == 'home':
+                home_offense_velocities.append(home_velocity)
+                away_defense_velocities.append(away_velocity)
+            if offensive_team == 'away':
+                home_defense_velocities.append(home_velocity)
+                away_offense_velocities.append(away_velocity)
+    results = (home_offense_velocities, home_defense_velocities,
+               away_offense_velocities, away_defense_velocities)
+    # Write spacing data to disk
+    if write_file:
+        filename = "{date}-{away_team}-{home_team}".format(date=date, away_team=away_team, home_team=home_team)
+        pickle.dump(results, open('data/velocity/' + filename + '.p', "wb"))
+    # Write game scores to disk
+    if write_score:
+        score = game.pbp['SCORE'].ix[len(game.pbp) - 1]
+        pickle.dump(score, open('data/score/' + filename + '.p', "wb"))
+
+    return (home_offense_velocities, home_defense_velocities,
+            away_offense_velocities, away_defense_velocities)
+
+    
+#watch_play_velocities(game, 52, 2, highlight_player='Nicolas Batum')
+#watch_play_velocities(game, 53, 2)
 
 
     
