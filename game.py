@@ -18,6 +18,7 @@ Roadmap:
 - Velocity by quarter? or just compare 1st and 4th quarter
 - Clean up movies
 - One more analysis
+- Maybe figure out direction by using the first made basket, and determine which side of the court the majority of players are on.
 """
 
 import os
@@ -393,7 +394,7 @@ class Game(object):
         quarter = current_moment.quarter
         return (game_time, x_pos, y_pos, colors, sizes, quarter, shot_clock, game_clock, edges)
 
-    def plot_frame(self, frame_number, highlight_player=None):
+    def plot_frame(self, frame_number, highlight_player=None, commentary=True):
         """
         Creates an individual the frame of game.
         Outputs .png file in {cwd}/temp
@@ -403,6 +404,7 @@ class Game(object):
                 frame_number gets player tracking data from moments.ix[frame_number]
             highlight_player (str): Name of player to highlight (by making their outline thicker).
                 if None, no player is highlighted
+            commentary (bool): if True, add play-by-play commentary under frame
 
         Returns: an instance of self, and outputs .png file of frame
 
@@ -419,7 +421,8 @@ class Game(object):
         plt.xlim(-5, 100)
         plt.ylim(-55, 5)
         sns.set_style('dark')
-        plt.figtext(0.23, -.6, commentary_script, size=20)
+        if commentary:
+            plt.figtext(0.23, -.6, commentary_script, size=20)
         plt.figtext(0.43, 0.125, shot_clock, size=18)
         plt.figtext(0.5, 0.125, 'Q'+str(quarter), size=18)
         plt.figtext(0.57, 0.125, str(game_clock), size=18)
@@ -517,15 +520,15 @@ class Game(object):
         """
         incorrect_count = 0
         correct_count = 0
-        for frame in range(500):
-            offensive_team = self.get_offensive_team(frame)
-            home_area, away_area = self.get_spacing_area(frame)
-            if home_area < away_area and offensive_team == 'home':
+        for frame in range(0, 10000, 100):
+            details=self._get_moment_details(frame)
+            home_team_x = details[1][1:6]
+            away_team_x = details[1][6:]
+            if np.mean(home_team_x) < np.mean(away_team_x):
                 incorrect_count += 1
-            elif away_area < home_area and offensive_team == 'away':
-                incorrect_count += 1
-            elif offensive_team:
+            else:
                 correct_count += 1
         if incorrect_count > correct_count:
             self.flip_direction = True
+        print (correct_count, incorrect_count)
         return None
