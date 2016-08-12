@@ -489,7 +489,7 @@ class Game(object):
         x_pos = np.array(details[1])
         shot_clock = int(details[6])
         quarter = details[5]
-        if shot_clock > 22 or len(x_pos) != 11:
+        if len(x_pos) != 11:
             return None
         if self.flip_direction:
             if (x_pos < 47).all() and quarter in [1, 2]:
@@ -535,11 +535,55 @@ class Game(object):
     def get_frame(self, game_time):
         frame = self.moments[self.moments.game_time.round() == game_time].index.values[0]
         return frame
+        
+    def get_play_frames(self, event_num, play_type='offense'):
+        """
+        Args:
+            event_num (int): EVENTNUM of interest in games.pbp
+        """
+        event_team = str(self.pbp[self.pbp['EVENTNUM'] == event_num].PLAYER1_TEAM_ABBREVIATION.head(1).values[0])
+        print (event_team)
+        if event_team == self.home_team:
+            target_team = 'home'
+        if event_team == self.away_team:
+            target_team = 'away'
+        end_time = int(self.pbp[self.pbp['EVENTNUM'] == event_num].game_time)
+        #find lower bound on starting frame of the play by determining when previous play ended
+        putative_start_time = int(self.pbp[self.pbp['EVENTNUM'] == event_num-1].game_time)
+        putative_start_frame = self.get_frame(putative_start_time)
+        end_frame = self.get_frame(end_time)
+        for test_frame in range(putative_start_frame, end_frame):
+            print(test_frame)
+            print(self.get_offensive_team(test_frame))
+            if self.get_offensive_team(test_frame) == target_team:
+                break
+        # Add two seconds to game time to let the players settle into position
+        start_frame = self.get_frame(round(self.moments.ix[test_frame].game_time + 2))
+        print(putative_start_frame, start_frame, end_frame, event_team, target_team)
+        
 
-"""
+
 game = Game('01.01.2016', 'TOR', 'CHA')
+game.get_play_frames(28)
+game.get_frame(167)
+game.get_frame(154)
+
+
 pickle.dump('temp/game/temp.p', open('data/game/temp.p', 'wb'))
 game.pbp.head()
 game.get_frame(19)
 game.plot_frame(295)
-"""
+
+df = game.pbp
+
+
+
+game.pbp[game.pbp['EVENTNUM'] == 36]
+
+
+
+
+
+
+
+
