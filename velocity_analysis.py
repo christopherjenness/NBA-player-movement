@@ -53,9 +53,9 @@ def calculate_velocities(game, frame, highlight_player=None):
     delta_y = np.array(details[2]) - np.array(previous_details[2])
     delta_coordinants = zip(delta_x, delta_y)
     distance_traveled = map(lambda coords: np.linalg.norm(coords), delta_coordinants)
-    time_frame = 40 #Fix this value (need to update _get_moment_details to include universe time)
+    delta_time = details[9] - previous_details[9]
     # Note, universe time is in msec
-    velocity = list(map(lambda distances: distances / time_frame, distance_traveled))
+    velocity = list(map(lambda distances: distances / delta_time, distance_traveled))
     if highlight_player:
         return velocity[player_index]
     # Check if home team and away team are assigned correctly
@@ -69,6 +69,7 @@ def calculate_velocities(game, frame, highlight_player=None):
     return (home_velocity, away_velocity)
 
 calculate_velocities(game, 10, highlight_player='Nicolas Batum')
+calculate_velocities(game, 10)
 
 def plot_velocity_frame(game, frame_number, ax, highlight_player=None):
     """
