@@ -236,21 +236,27 @@ class Game(object):
         Outputs video file of play in {cwd}/temp
 
         Args:
-            game_time (int): time in game to start video (seconds into the game)
+            game_time (int): time in game to start video (seconds into the game).
+                Currently game_time can also be an tuple of length two with (starting_frame, ending_frame)
+                if you want to watch a play using frames instead of game time.
             length (int): length of play to watch (seconds)
             highlight_player (str): If not None, video will highlight the circle of
                 the inputed player for easy tracking.
 
         Returns: an instance of self, and outputs video file of play
         """
-        # Get starting and ending frame from requested game_time and length
-        starting_frame = self.moments[self.moments.game_time.round() == game_time].index.values[0]
-        ending_frame = self.moments[self.moments.game_time.round() == game_time + length].index.values[0]
+        if type(game_time) == tuple:
+            starting_frame = game_time[0]
+            ending_frame = game_time[1]
+        else:
+            # Get starting and ending frame from requested game_time and length
+            starting_frame = self.moments[self.moments.game_time.round() == game_time].index.values[0]
+            ending_frame = self.moments[self.moments.game_time.round() == game_time + length].index.values[0]
 
         # Make video of each frame
         for frame in range(starting_frame, ending_frame):
             self.plot_frame(frame, highlight_player=highlight_player)
-        command = 'ffmpeg -framerate 20 -start_number {starting_frame} -i %d.png -c:v libx264 -r 30 -pix_fmt yuv420p -vf "scale=trunc(iw/2)*2:trunc(ih/2)*2" {game_time}.mp4'.format(starting_frame=starting_frame, game_time=game_time)
+        command = 'ffmpeg -framerate 20 -start_number {starting_frame} -i %d.png -c:v libx264 -r 30 -pix_fmt yuv420p -vf "scale=trunc(iw/2)*2:trunc(ih/2)*2" {starting_frame}.mp4'.format(starting_frame=starting_frame)
         os.chdir('temp')
         os.system(command)
         os.chdir('..')
@@ -529,11 +535,20 @@ class Game(object):
                 correct_count += 1
         if incorrect_count > correct_count:
             self.flip_direction = True
-        print (correct_count, incorrect_count)
         return None
     
     def get_frame(self, game_time):
-        frame = self.moments[self.moments.game_time.round() == game_time].index.values[0]
+        test_time = game_time
+        while True: 
+            if test_time in self.moments.game_time.round():
+                frames = self.moments[self.moments.game_time.round() == test_time].index.values
+                if len(frames) > 0:
+                    frame = frames[0]
+                    break
+                else:
+                    test_time -= 1
+            else:
+                test_time -= 1
         return frame
         
     def get_play_frames(self, event_num, play_type='offense'):
@@ -541,49 +556,40 @@ class Game(object):
         Args:
             event_num (int): EVENTNUM of interest in games.pbp
         """
+        play_index = self.pbp[self.pbp['EVENTNUM']==event_num].index[0]
         event_team = str(self.pbp[self.pbp['EVENTNUM'] == event_num].PLAYER1_TEAM_ABBREVIATION.head(1).values[0])
-        print (event_team)
         if event_team == self.home_team:
             target_team = 'home'
         if event_team == self.away_team:
             target_team = 'away'
         end_time = int(self.pbp[self.pbp['EVENTNUM'] == event_num].game_time)
         #find lower bound on starting frame of the play by determining when previous play ended
-        putative_start_time = int(self.pbp[self.pbp['EVENTNUM'] == event_num-1].game_time)
+        putative_start_time = int(self.pbp.ix[play_index-1].game_time)
         putative_start_frame = self.get_frame(putative_start_time)
         end_frame = self.get_frame(end_time)
         for test_frame in range(putative_start_frame, end_frame):
-            print(test_frame)
-            print(self.get_offensive_team(test_frame))
             if self.get_offensive_team(test_frame) == target_team:
                 break
+        # if the previous loop never found an offensive play, the function returns None
+        else:
+            return None
         # Add two seconds to game time to let the players settle into position
         start_frame = self.get_frame(round(self.moments.ix[test_frame].game_time + 2))
-        print(putative_start_frame, start_frame, end_frame, event_team, target_team)
+        return (start_frame, end_frame)
         
 
 
 game = Game('01.01.2016', 'TOR', 'CHA')
-game.get_play_frames(28)
-game.get_frame(167)
-game.get_frame(154)
+plays = []
+shots = game.pbp[game.pbp['EVENTMSGTYPE']==1]['EVENTNUM']
+shot = game.pbp[game.pbp['EVENTNUM']==9].index[0]
+for value in shots:
+    plays.append(game.get_play_frames(value))
 
 
-pickle.dump('temp/game/temp.p', open('data/game/temp.p', 'wb'))
-game.pbp.head()
-game.get_frame(19)
-game.plot_frame(295)
-
-df = game.pbp
+game.watch_play(plays[1], 10)
 
 
 
-game.pbp[game.pbp['EVENTNUM'] == 36]
-
-
-
-
-
-
-
+game.get_frame(208)
 
