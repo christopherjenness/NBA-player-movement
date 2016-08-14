@@ -1,2 +1,13 @@
-# NBA-player-movement
-Analysis of NBA player tracking data
+# NBA player tracking visualization and analysis
+## Visualization
+
+```python
+from Game import game
+game_data = game()
+game.watch_play()
+```
+
+```python
+game.watch_play(commentary=True)
+```
+
