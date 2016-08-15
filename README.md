@@ -22,7 +22,8 @@ If you are interested in a single player, they can easily be tracked.
 ```python
 game.watch_play(2007, 10, highlight_player='Stephen Curry', commentary=False)
 ```
-![img](http://i.imgur.com/75858nm.gifv)
+
+![Curry3](http://i.imgur.com/4br8JhS.gif?1)
 
 All of a players actions can be extracted and viewed with a single method call.
 ```python
