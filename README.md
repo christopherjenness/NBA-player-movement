@@ -2,7 +2,6 @@
 
 This library contains useful methods for visualizing and analyzing NBA player tracking data.
 
-TODO: add links
 The data is located here and contains all player and ball locations for NBA games from the 2015-16 season.  Play-by-play data is obtained from nba.stats.com.
 
 ## Visualization
@@ -18,14 +17,14 @@ To easily follow the flow of the game, commentary can be added.
 game.watch_play(game_time=6, length=120, commentary=True)
 ```
 
-![Commentary](GSWatPOR.gif)
+![Commentary](examples/GSWatPOR.gif)
 
 If you are interested in a single player, they can easily be tracked.
 ```python
 game.watch_play(2007, 10, highlight_player='Stephen Curry', commentary=False)
 ```
 
-![Curry3](http://i.imgur.com/4br8JhS.gif?1)
+![Curry3](examples/Curry3.gif)
 
 All of a players actions can be extracted and viewed with a single method call.
 ```python
