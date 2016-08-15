@@ -230,7 +230,7 @@ class Game(object):
 
         return ax
 
-    def watch_play(self, game_time, length, highlight_player=None):
+    def watch_play(self, game_time, length, highlight_player=None, commentary=True):
         """
         Method for viewing plays in game.
         Outputs video file of play in {cwd}/temp
@@ -255,7 +255,7 @@ class Game(object):
 
         # Make video of each frame
         for frame in range(starting_frame, ending_frame):
-            self.plot_frame(frame, highlight_player=highlight_player)
+            self.plot_frame(frame, highlight_player=highlight_player, commentary=commentary)
         command = 'ffmpeg -framerate 20 -start_number {starting_frame} -i %d.png -c:v libx264 -r 30 -pix_fmt yuv420p -vf "scale=trunc(iw/2)*2:trunc(ih/2)*2" {starting_frame}.mp4'.format(starting_frame=starting_frame)
         os.chdir('temp')
         os.system(command)
@@ -578,18 +578,6 @@ class Game(object):
         return (start_frame, end_frame)
         
 
+game = Game('01.08.2016', 'POR', 'GSW')
 
-game = Game('01.01.2016', 'TOR', 'CHA')
-plays = []
-shots = game.pbp[game.pbp['EVENTMSGTYPE']==1]['EVENTNUM']
-shot = game.pbp[game.pbp['EVENTNUM']==9].index[0]
-for value in shots:
-    plays.append(game.get_play_frames(value))
-
-
-game.watch_play(plays[1], 10)
-
-
-
-game.get_frame(208)
-
+game.watch_play(6, 120)
