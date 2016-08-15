@@ -9,19 +9,20 @@ The data is located here and contains all player and ball locations for NBA game
 To visualize games from the tracking data, the `game` class in `game.py` is used.
 ```python
 from Game import game
-game_data = game()
-game.watch_play()
+game = Game('01.08.2016', 'POR', 'GSW')
+game.watch_play(game_time=6, length=120, commentary=False)
 ```
 
 To easily follow the flow of the game, commentary can be added.
 ```python
-game.watch_play(commentary=True)
+game.watch_play(game_time=6, length=120, commentary=True)
 ```
 
 If you are interested in a single player, they can easily be tracked.
 ```python
-game.watch_play(highlight_player="Stephen Curry", commentary=False)
+game.watch_play(2007, 10, highlight_player='Stephen Curry', commentary=False)
 ```
+![img](http://i.imgur.com/75858nm.gifv)
 
 All of a players actions can be extracted and viewed with a single method call.
 ```python
