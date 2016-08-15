@@ -18,6 +18,8 @@ To easily follow the flow of the game, commentary can be added.
 game.watch_play(game_time=6, length=120, commentary=True)
 ```
 
+![Commentary](GSWatPOR.gif)
+
 If you are interested in a single player, they can easily be tracked.
 ```python
 game.watch_play(2007, 10, highlight_player='Stephen Curry', commentary=False)
