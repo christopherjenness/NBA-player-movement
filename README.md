@@ -11,6 +11,7 @@ from Game import game
 game = Game('01.08.2016', 'POR', 'GSW')
 game.watch_play(game_time=6, length=120, commentary=False)
 ```
+![NoCommentary](examples/GSWatPORnocommentary.gif)
 
 To easily follow the flow of the game, commentary can be added.
 ```python
