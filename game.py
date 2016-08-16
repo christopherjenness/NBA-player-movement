@@ -290,7 +290,7 @@ class Game(object):
         for index, time in enumerate(player_action_times):
             if index == max_vids:
                 break
-            self.watch_play(time-length, length, highlight_player=player_name)
+            self.watch_play(time-length, length, highlight_player=player_name, commentary=False)
         return self
 
     def _get_commentary(self, game_time, commentary_length=6, commentary_depth=10):
@@ -580,4 +580,4 @@ class Game(object):
 
 game = Game('01.08.2016', 'POR', 'GSW')
 
-game.watch_play(6, 120)
+game.watch_player_actions("Stephen Curry", "made_FG")
