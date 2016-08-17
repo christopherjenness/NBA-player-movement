@@ -22,7 +22,7 @@ import os
 import json
 import pandas as pd
 import matplotlib.pyplot as plt
-from matplotlib.patches import Circle, Rectangle, Arc
+from matplotlib.patches import Circle, Rectangle, Arc, Polygon
 import numpy as np
 import seaborn as sns
 from scipy.spatial import ConvexHull
@@ -230,7 +230,7 @@ class Game(object):
 
         return ax
 
-    def watch_play(self, game_time, length, highlight_player=None, commentary=True):
+    def watch_play(self, game_time, length, highlight_player=None, commentary=True, show_spacing=False):
         """
         Method for viewing plays in game.
         Outputs video file of play in {cwd}/temp
@@ -255,7 +255,7 @@ class Game(object):
 
         # Make video of each frame
         for frame in range(starting_frame, ending_frame):
-            self.plot_frame(frame, highlight_player=highlight_player, commentary=commentary)
+            self.plot_frame(frame, highlight_player=highlight_player, commentary=commentary, show_spacing=show_spacing)
         command = 'ffmpeg -framerate 20 -start_number {starting_frame} -i %d.png -c:v libx264 -r 30 -pix_fmt yuv420p -vf "scale=trunc(iw/2)*2:trunc(ih/2)*2" {starting_frame}.mp4'.format(starting_frame=starting_frame)
         os.chdir('temp')
         os.system(command)
@@ -399,7 +399,7 @@ class Game(object):
         quarter = current_moment.quarter
         return (game_time, x_pos, y_pos, colors, sizes, quarter, shot_clock, game_clock, edges, universe_time)
 
-    def plot_frame(self, frame_number, highlight_player=None, commentary=True):
+    def plot_frame(self, frame_number, highlight_player=None, commentary=True, show_spacing=False):
         """
         Creates an individual the frame of game.
         Outputs .png file in {cwd}/temp
@@ -437,6 +437,17 @@ class Game(object):
         # Add team color indicators to top of frame
         plt.scatter([30, 67], [2.5, 2.5], s=100,
                     c=[self.team_colors[self.away_id], self.team_colors[self.home_id]])
+        if show_spacing:
+            xy_pos = np.column_stack((np.array(x_pos), np.array(y_pos)))
+            if show_spacing == 'home':
+                points = xy_pos[1:6, :]
+            if show_spacing == 'away':
+                points = xy_pos[6:, :]
+            hull = ConvexHull(points)
+            hull_points = points[hull.vertices, :]
+            polygon = Polygon(hull_points, alpha=0.3, color='gray')
+            ax=plt.gca()
+            ax.add_patch(polygon)
         plt.savefig('temp/{frame_number}.png'.format(frame_number=frame_number), bbox_inches='tight')
         plt.close()
         return self
@@ -580,4 +591,37 @@ class Game(object):
 
 game = Game('01.08.2016', 'POR', 'GSW')
 
-game.watch_player_actions("Stephen Curry", "made_FG")
+game.watch_play(121, 10, commentary=False, show_spacing='home')
+
+"""
+import matplotlib.pyplot as plt
+from matplotlib.patches import Ellipse, Polygon
+
+points = np.random.rand(30, 2)
+hull = ConvexHull(points)
+Polygon(np.array(thehull))
+plt.scatter(thehull)
+x = list(points[hull.vertices,0])
+y =list(points[hull.vertices,1])
+thehull = list(zip(x, y))
+ 
+plt.plot(points[hull.vertices,0], points[hull.vertices,1], 'r--', lw=2)
+fig = plt.figure()
+ax1 = fig.add_subplot(111)
+coll = PolyCollection(v)
+ax.add_collection(coll)
+v = np.array([[1,1], [1, 2], [3, 3], ])
+plt.Polygon(thehull) 
+
+
+
+from matplotlib.collections import PolyCollection
+import matplotlib.patches as mpatches
+polygon = Polygon(thehull, alpha=0.3, color='gray')
+fig1 = plt.figure()
+ax = plt.gca()
+ax.add_patch(polygon)
+hull.vertices
+"""
+
+
