@@ -57,7 +57,7 @@ game.watch_play(show_spacing='GSW')
 
 ![SpacingPlay](examples/GSWspacing.gif)
 
-`spacing_analysis.py` contains the code for the following analysis.  To process the data, only "set plays" were analyzed.  Since "transition plays" has unique spacing properties, we limited this analysis to "standard" plays where the offense and defense are set.
+`spacing_analysis.py` contains the code for the following analysis.  To process the data, only "set plays" were analyzed.  Since "transition plays" have unique spacing properties, we limited this analysis to "standard" plays where the offense and defense are set.
 
 Which teams are best at spacing the defense? (Remember, spacing the defense more is thought to be better).  If we average over all time points for each team, we get the following:
 
