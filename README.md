@@ -27,12 +27,18 @@ game.watch_play(2007, 10, highlight_player='Stephen Curry', commentary=False)
 
 ![Curry3](examples/Curry3.gif)
 
-All of a players actions can be extracted and viewed with a single method call.
+All of a players actions can be extracted and viewed with a single method call.  Currently, actions can be in ['all_FG', 'made_FG', 'miss_FG', 'rebound'], but this method can be easily extended to include any action.
+
 ```python
 game.watch_player_actions("Stephen Curry", "made_FG")
+"""
+This method will output a video for each of Steph's made FGs in the game, however, I am just diplaying one of them.
+"""
 ```
 
-## Analysis
+![CurryFG](examples/CurryFG.gif)
+
+## Analysis (In Progress)
 
 Here, we analyze two aspects of basketball that are difficult to address without player tracking data:
 * Defensive Spacing
