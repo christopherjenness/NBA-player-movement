@@ -588,12 +588,12 @@ class Game(object):
         start_frame = self.get_frame(round(self.moments.ix[test_frame].game_time + 2))
         return (start_frame, end_frame)
         
-
+"""
 game = Game('01.08.2016', 'POR', 'GSW')
 
 game.watch_play(121, 10, commentary=False, show_spacing='home')
 
-"""
+
 import matplotlib.pyplot as plt
 from matplotlib.patches import Ellipse, Polygon
 
