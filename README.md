@@ -52,7 +52,7 @@ NBA commentators often praise offensive teams who can "Space the defense".  Esse
 The workhorse of this analysis is `scipy.spatial.ConvexHull` which measures the convex hull of the defense (larger convex hull = more spaced defense).  This can be visualized:
 
 ```python
-game.watch_play(show_spacing='GSW')
+game.watch_play(121, 10, commentary=False, show_spacing='home')
 ```
 
 ![SpacingPlay](examples/GSWspacing.gif)
@@ -61,21 +61,27 @@ game.watch_play(show_spacing='GSW')
 
 Which teams are best at spacing the defense? (Remember, spacing the defense more is thought to be better).  If we average over all time points for each team, we get the following:
 
-http://www.sbnation.com/nba/2015/1/9/7517125/detroit-pistons-winning-streak-josh-smith-released
+![SpacingBar](examples/DefensiveSpacing.png)
 
-Interestingly, we see that Detroit is the best team at spacing defenses.  This is something that has been anecdotally documented by Mike Prada, and the data back up his claims.  Additionally, teams like San Antonio that are thought to have a modern offense, are great at spacing the defense.  
+Interestingly, we see that Detroit is the best team at spacing defenses.  [This is something that has been anecdotally documented by Mike Prada, and the data back up his claims.](http://www.sbnation.com/nba/2015/1/9/7517125/detroit-pistons-winning-streak-josh-smith-released)  Additionally, teams like Cleveland that are thought to have a modern offense, are great at spacing the defense.  
 
-But the question is: **Does spacing the defense help you win?**  Here we look at the score differential vs defensive spacing and we see a positive correlation.  In fact, spacing the defense an extra [X] square feet correlates with increasing the score differential [X] points! 
+But the question is: **Does spacing the defense help you win?**  Here we look at the score differential vs defensive spacing and we see a positive correlation.  In fact, spacing the defense an extra 5 square feet correlates with increasing the score differential 4.25 points! 
 
-If you stare at this graph long enough, you can notice it also shows the level of home court advantage in the NBA.  If you are interested, you can read an analysis of home court advantage I did here.
+![SpacingScore](examples/SpacingVsScore.png)
 
-**How can a team space the defense better?**  Intuitively, spacing your offense will draw out the defense.  This is true with some interesting exceptions.
+If you stare at this graph long enough, you can notice it also shows the level of home court advantage in the NBA.  If you are interested, you can read an analysis of home court advantage I did [here.](https://github.com/christopherjenness/my-pdfs/blob/master/NBAHomeTeamAdvantage.pdf)
 
-Notice Toronto.  Toronto has a hard time spacing the defense even though they space out their offense.  This is likely due to their star DeMar DeRozan being a shooting liability.  Defender's don't need to guard him out on the 3PT line, so they can keep the paint clogged.
+**How can a team space the defense better?**  Intuitively, spacing your offense will draw out the defense.  The plot below looks at each game, and plots how spaced the offenses and defenses were.  Clearly, a more spaced offense correlates with a more spaced defense.
 
-Notice San Antonio.  San Antonio can effectively space the defense without spacing out their offense.  May be due to having one of the best 3PT shooters in the league, Kawhi Leonard, who needs be guarded religiously at the 3PT line.
+![SpacingOffDeff](examples/OffenseVsDefense.png)
 
-**Can more efficient 3PT shooting space the defense?**  It appears so.  Taking more 3 point shoots, or taking them at a higher percentage correlate with effective defensive spacing.
+But when you break it down by team, how effectively can each team space the defense?  Below is a plot of each teams average offensive spacing plotted against how well they can space the opponent's defense.  As expected, if a team has a well spaced offense, their opponents defense is more spaced.  There are a few interested exceptions though.
+
+![TeamSpacing](examples/Spacing_scatter.png)
+
+Notice Toronto (TOR).  Toronto has a hard time spacing the defense even though they space out their offense.  This is likely due to their star DeMar DeRozan being a shooting liability.  Defender's don't need to guard him out on the 3PT line, so they can keep the paint clogged.
+
+Notice San Antonio (SAS).  San Antonio can effectively space the defense without spacing out their offense.  This may be due to having one of the best 3PT shooters in the league, Kawhi Leonard, who needs be guarded religiously at the 3PT line.
 
 Currently, I'm working on breaking down defensive spacing per play, so see the effect on individual plays instead of aggregated game data.  This is yielding interesting insights.
 
