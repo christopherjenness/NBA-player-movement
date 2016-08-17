@@ -32,7 +32,8 @@ All of a players actions can be extracted and viewed with a single method call. 
 ```python
 game.watch_player_actions("Stephen Curry", "made_FG")
 """
-This method will output a video for each of Steph's made FGs in the game, however, I am just diplaying one of them.
+This method will output a video for each of Steph's made FGs in the game, 
+however, I am just diplaying one of them.
 """
 ```
 
@@ -53,6 +54,8 @@ The workhorse of this analysis is `scipy.spatial.ConvexHull` which measures the 
 ```python
 game.watch_play(show_spacing='GSW')
 ```
+
+![SpacingPlay](examples/GSWspacing.gif)
 
 `spacing_analysis.py` contains the code for the following analysis.  To process the data, only "set plays" were analyzed.  Since "transition plays" has unique spacing properties, we limited this analysis to "standard" plays where the offense and defense are set.
 
