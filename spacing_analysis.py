@@ -110,6 +110,7 @@ def plot_spacing(date, home_team, away_team, defense=True, save_plot=False):
         Also, shows plt.hist of team spacing during game
 
     """
+    plt.plot()
     filename = "{date}-{away_team}-{home_team}".format(date=date, away_team=away_team, home_team=home_team)
     if filename in os.listdir('data/spacing'):
         data = pickle.load(open("data/spacing/"+filename, "rb"))
@@ -177,7 +178,6 @@ def get_spacing_df(gamelist):
             space_dif (float): difference (sq ft) between away team's defensive spacing
                 and home team's defensive spacing
     """
-
     details = []
     for game in gamelist:
         detail = get_spacing_details(game)
@@ -192,7 +192,7 @@ def get_spacing_df(gamelist):
     df = df[df.home_offense_areas > 80]
     return df
 
-def plot_offense_vs_defense_spacing(spacing_data, save_fig=False):
+def plot_offense_vs_defense_spacing(spacing_data):
     """
     Plot of offensive vs. defensive spacing for games
 
@@ -212,12 +212,11 @@ def plot_offense_vs_defense_spacing(spacing_data, save_fig=False):
     plt.xlabel('Average Offensive Spacing (sq ft)', fontsize=16)
     plt.ylabel('Average Defensive Spacing (sq ft)', fontsize=16)
     plt.title('Offensive spacing robustly induces defensive spacing', fontsize=16)
-    plt.show()
-    if save_fig:
-        plt.savefig('temp/OffenseVsDefense.png')
+    plt.savefig('temp/OffenseVsDefense.png')
+    plt.close()
     return None
 
-def plot_defense_spacing_vs_score(spacing_data, save_fig=False):
+def plot_defense_spacing_vs_score(spacing_data):
     """
     Plot of team's defensive spacing vs score differential for games
 
@@ -230,18 +229,16 @@ def plot_defense_spacing_vs_score(spacing_data, save_fig=False):
     Returns None
         Also, shows plot.
     """
-
     y = spacing_data.home_points - spacing_data.away_points
     x = spacing_data.away_defense_areas - spacing_data.home_defense_areas
     sns.regplot(x, y, ci=False)
     plt.xlabel(' Home Team Defensive Spacing Differential (sq ft)', fontsize=16)
     plt.ylabel('Home Team Score Differential (pts)', fontsize=16)
     plt.title('Spacing the defense correlates with outscoring opponents', fontsize=16)
-    plt.show()
-    if save_fig:
-        plt.savefig('temp/SpacingVsScore.png')
+    plt.savefig('temp/SpacingVsScore.png')
+    plt.close()
 
-def plot_defense_spacing_vs_wins(spacing_data, save_fig=False):
+def plot_defense_spacing_vs_wins(spacing_datae):
     """
     Plot of team's defensive spacing vs wins (binary: 0, 1) for games
 
@@ -254,7 +251,6 @@ def plot_defense_spacing_vs_wins(spacing_data, save_fig=False):
     Returns None
         Also, shows plot.
     """
-
     clf = linear_model.LogisticRegression(C=1)
     X = np.array(spacing_data.space_dif)
     X = X[:, np.newaxis]
@@ -274,11 +270,10 @@ def plot_defense_spacing_vs_wins(spacing_data, save_fig=False):
     plt.xlabel('Home Team Defensive Spacing Differential (sq ft)', fontsize=16)
     plt.ylabel('Home Team Win', fontsize=16)
     plt.title('Spacing the Defense Correlates with winning', fontsize=16)
-    plt.show()
-    if save_fig:
-        plt.savefig('temp/SpacingVsWins.png')
+    plt.savefig('temp/SpacingVsWins.png')
+    plt.close()
 
-def plot_team_defensive_spacing(spacing_data, save_fig=False):
+def plot_team_defensive_spacing(spacing_data):
     """
     Plot of team's defensive spacing (bar graph)
 
@@ -291,7 +286,6 @@ def plot_team_defensive_spacing(spacing_data, save_fig=False):
     Returns None
         Also, shows plot.
     """
-
     df = pd.DataFrame()
     df['home'] = spacing_data.groupby('home_team')['away_defense_areas'].sum()
     df['home_count'] = spacing_data.groupby('home_team')['away_defense_areas'].count()
@@ -299,14 +293,14 @@ def plot_team_defensive_spacing(spacing_data, save_fig=False):
     df['away_count'] = spacing_data.groupby('away_team')['home_defense_areas'].count()
     df['average_induced_space'] = (df.home + df.away) / (df.away_count + df.home_count)
     df['average_induced_space'].sort_values().plot(kind='bar', color=sns.color_palette()[0])
-    plt.xlabel('Team', fontsize=16)
-    plt.ylabel("Opponent's Defensive Spacing", fontsize=16)
+    plt.xlabel('', fontsize=16)
+    plt.ylabel("Opponent's Defensive Spacing (sq ft)", fontsize=16)
     plt.ylim(60, 70)
-    plt.show()
-    if save_fig:
-        plt.savefig('temp/DefensiveSpacing.png')
+    plt.title("Team's ability to space the defense", fontsize=18)
+    plt.savefig('temp/DefensiveSpacing.png')
+    plt.close()
 
-def plot_teams_ability_to_space_defense(spacing_data, save_fig=False):
+def plot_teams_ability_to_space_defense(spacing_data):
     """
     Plots teams ability to space defense given their offensive spacing (scatter plot)
 
@@ -319,7 +313,6 @@ def plot_teams_ability_to_space_defense(spacing_data, save_fig=False):
     Returns None
         Also shows plot
     """
-
     df = spacing_data.groupby('home_team').count()
     df['home'] = spacing_data.groupby('home_team')['away_defense_areas'].sum()
     df['home_count'] = spacing_data.groupby('home_team')['away_defense_areas'].count()
@@ -340,10 +333,10 @@ def plot_teams_ability_to_space_defense(spacing_data, save_fig=False):
                              row[1]['average_offense_space'] + 0.1])
     plt.xlabel('Average Offensive Spacing (sq ft)', fontsize=16)
     plt.ylabel("Average Opponent's Defensive Spacing (sq ft)", fontsize=16)
-    plt.title("Team's ability to space opponents defense", fontsize=16)
-    plt.show()
-    if save_fig:
-        plt.savefig('temp/Spacing_scatter.png')
+    plt.title("Team's ability to space opponent's defense", fontsize=16)
+    plt.savefig('temp/Spacing_scatter.png')
+    plt.close()
+
 
 if __name__ == "__main__":
     """
@@ -355,8 +348,9 @@ if __name__ == "__main__":
     all_games = extract_games()
     #write_spacing(all_games)
     spacing_data = get_spacing_df(all_games)
-    #plot_offense_vs_defense_spacing(spacing_data)
-    #plot_defense_spacing_vs_score(spacing_data)
-    #plot_defense_spacing_vs_wins(spacing_data)
-    #plot_team_defensive_spacing(spacing_data)
-    #plot_teams_ability_to_space_defense(spacing_data)
+    plot_offense_vs_defense_spacing(spacing_data)
+    plot_defense_spacing_vs_score(spacing_data)
+    plot_defense_spacing_vs_wins(spacing_data)
+    plot_team_defensive_spacing(spacing_data)
+    plot_teams_ability_to_space_defense(spacing_data)
+    
