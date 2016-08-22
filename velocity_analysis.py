@@ -76,7 +76,7 @@ def calculate_velocities(game, frame, highlight_player=None):
     if home_velocity > 0.4:
         home_velocity = 0
     if away_velocity > 0.4:
-        away_velocity = 0, 0
+        away_velocity = 0
     return (game_time, home_velocity, away_velocity)
 
 def plot_velocity_frame(game, frame_number, ax, highlight_player=None):
@@ -92,7 +92,7 @@ def plot_velocity_frame(game, frame_number, ax, highlight_player=None):
 
     Returns: plt.fig of frame from game
     """
-    (game_time, x_pos, y_pos, colors, sizes, quarter, shot_clock, game_clock, edges) = game._get_moment_details(frame_number, highlight_player=highlight_player)
+    (game_time, x_pos, y_pos, colors, sizes, quarter, shot_clock, game_clock, edges, universe_time) = game._get_moment_details(frame_number, highlight_player=highlight_player)
     (commentary_script, score) = game._get_commentary(game_time)
     
     game._draw_court()
@@ -126,7 +126,8 @@ def watch_play_velocities(game, game_time, length, highlight_player=None):
     else:
         home_velocities = [calculate_velocities(game, frame)[1] for frame in range(starting_frame, ending_frame)]
         away_velocities = [calculate_velocities(game, frame)[2] for frame in range(starting_frame, ending_frame)]
-        max_velocity = max(home_velocities + away_velocities)
+        all_velocities =  home_velocities + away_velocities
+        max_velocity = max(all_velocities)
     
     # Plot each frame
     for index, frame in enumerate(range(starting_frame, ending_frame)):
@@ -232,13 +233,16 @@ if __name__ == "__main__":
     """
 
     all_games = extract_games()
-    write_spacing(all_games)
+    #write_spacing(all_games)
     #spacing_data = get_spacing_df(all_games)
     #plot_offense_vs_defense_spacing(spacing_data)
     #plot_defense_spacing_vs_score(spacing_data)
     #plot_defense_spacing_vs_wins(spacing_data)
     #plot_team_defensive_spacing(spacing_data)
     #plot_teams_ability_to_space_defense(spacing_data)
+    
+    game = Game('01.08.2016', 'POR', 'GSW')
+    watch_play_velocities(game, game_time=2007, length=10, highlight_player=None)
 
 
 
