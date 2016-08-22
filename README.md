@@ -22,7 +22,7 @@ game.watch_play(game_time=6, length=120, commentary=True)
 
 If you are interested in a single player, they can easily be tracked.
 ```python
-game.watch_play(2007, 10, highlight_player='Stephen Curry', commentary=False)
+game.watch_play(game_time=2007, length=10, highlight_player='Stephen Curry', commentary=False)
 ```
 
 ![Curry3](examples/Curry3.gif)
@@ -79,10 +79,10 @@ But when you break it down by team, how effectively can each team space the defe
 
 ![TeamSpacing](examples/Spacing_scatter.png)
 
-Notice Toronto (TOR).  Toronto has a hard time spacing the defense even though they space out their offense.  This is likely due to their star DeMar DeRozan being a shooting liability.  Defender's don't need to guard him out on the 3PT line, so they can keep the paint clogged.
+Notice Toronto (TOR).  Toronto has a hard time spacing the defense even though they space out their offense.  This is likely due to their star DeMar DeRozan being a shooting liability.  Defenders don't need to guard him out on the 3PT line, so they can keep the paint clogged.
 
 Notice San Antonio (SAS).  San Antonio can effectively space the defense without spacing out their offense.  This may be due to having one of the best 3PT shooters in the league, Kawhi Leonard, who needs be guarded religiously at the 3PT line.
 
-Currently, I'm working on breaking down defensive spacing per play, so see the effect on individual plays instead of aggregated game data.  This is yielding interesting insights.
+Currently, I'm working on breaking down defensive spacing per play to see the effect on individual plays instead of aggregated game data.  This is yielding interesting insights.
 
 ### Player Velocity
