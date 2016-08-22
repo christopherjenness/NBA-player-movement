@@ -86,3 +86,23 @@ Notice San Antonio (SAS).  San Antonio can effectively space the defense without
 Currently, I'm working on breaking down defensive spacing per play to see the effect on individual plays instead of aggregated game data.  This is yielding interesting insights.
 
 ### Player Velocity
+
+Player tracking data provides insight into tean's and player's velocity.  Here we analyze how player speed affects the flow of the game.  The analysis code can be found in `velocity_analysis.py`.
+
+Using the visualization shwon above, team velocities can be shown as the game progresses:
+
+```python
+game = Game('01.08.2016', 'POR', 'GSW')
+watch_play_velocities(game, game_time=7, length=54)
+```
+
+![TeamVelocity](examples/TeamVelocity.gif)
+
+Alternatively, individual player velocities can be visualized:
+
+```python
+game = Game('01.08.2016', 'POR', 'GSW')
+watch_play_velocities(game, game_time=7, length=54, highlight_player='Stephen Curry')
+```
+
+![StephVelocity](examples/CurryVelocity.gif)
