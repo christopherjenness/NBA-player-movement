@@ -98,8 +98,10 @@ class Game(object):
         Tracking Data is provided by NBA.com, hosted at: https://www.github.com/neilmj
         """
         # Retrive and extract Data into /temp folder
-        datalink = ("https://raw.githubusercontent.com/neilmj/BasketballData/master/"
+
+        datalink = ("https://raw.githubusercontent.com/1wheel/BasketballData/master/"
                     "2016.NBA.Raw.SportVU.Game.Logs/{self.tracking_id}.7z").format(self=self)
+        print(datalink)
         os.system("curl {datalink} -o temp/zipdata".format(datalink=datalink))
         os.system("7za -o./temp x temp/zipdata")
         os.remove("./temp/zipdata")
@@ -587,3 +589,41 @@ class Game(object):
         # Add two seconds to game time to let the players settle into position
         start_frame = self.get_frame(round(self.moments.ix[test_frame].game_time + 2))
         return (start_frame, end_frame)
+        
+"""
+game = Game('01.08.2016', 'POR', 'GSW')
+
+game.watch_play(121, 10, commentary=False, show_spacing='home')
+
+
+import matplotlib.pyplot as plt
+from matplotlib.patches import Ellipse, Polygon
+
+points = np.random.rand(30, 2)
+hull = ConvexHull(points)
+Polygon(np.array(thehull))
+plt.scatter(thehull)
+x = list(points[hull.vertices,0])
+y =list(points[hull.vertices,1])
+thehull = list(zip(x, y))
+ 
+plt.plot(points[hull.vertices,0], points[hull.vertices,1], 'r--', lw=2)
+fig = plt.figure()
+ax1 = fig.add_subplot(111)
+coll = PolyCollection(v)
+ax.add_collection(coll)
+v = np.array([[1,1], [1, 2], [3, 3], ])
+plt.Polygon(thehull) 
+
+
+
+from matplotlib.collections import PolyCollection
+import matplotlib.patches as mpatches
+polygon = Polygon(thehull, alpha=0.3, color='gray')
+fig1 = plt.figure()
+ax = plt.gca()
+ax.add_patch(polygon)
+hull.vertices
+"""
+
+
