@@ -38,15 +38,26 @@ def extract_games():
 
 def calculate_velocities(game, frame, highlight_player=None):
     """
+    Calculates team or player velocity for a frame in a game
     
+    Args:
+        game (Game): Game instance to get data from
+        frame_number (int): number of frame in game to calculate velocities
+            frame_number gets player tracking data from moments.ix[frame_number]
+        highlight_player (str): Name of player to calculate velocity of.
+            if None, cumulative team velocities are calculated.
+    
+    Returns: tuple of data (game_time, home_velocity, away_velocity)
+        game_time (int): universe time of the frame
+        home_velocity (float): cumulative velocity (ft/msec) of home team
+        away_velocity (float): cumulative velocity (ft/msec) of away team
     """
     details = game._get_moment_details(frame, highlight_player=highlight_player)
     previous_details = game._get_moment_details(frame - 1)
     game_time = details[9]
     
     # Highlighed player's edge value (details[8]) is 5 instead of 0.5
-    # Use this fact to retrieve the index of the player
-    
+    # Use this fact to retrieve the index of the player of interest
     if highlight_player:
         if 5 in details[8]:
             player_index = details[8].index(5)
@@ -58,6 +69,7 @@ def calculate_velocities(game, frame, highlight_player=None):
             return 0
         return (game_time, 0, 0)
 
+    # If not all the players are on the court, there is an error in the data
     if len(details[1]) != 11 or len(details[2]) != 11 or len(previous_details[1]) != 11 or len(previous_details[2]) != 11:
         return (game_time, 0, 0)
     delta_x = np.array(details[1]) - np.array(previous_details[1])
@@ -69,14 +81,8 @@ def calculate_velocities(game, frame, highlight_player=None):
     velocity = list(map(lambda distances: distances / delta_time, distance_traveled))
     if highlight_player:
         return (game_time, velocity[player_index])
-    # Check if home team and away team are assigned correctly
     home_velocity = sum(velocity[1:6])
     away_velocity = sum(velocity[6:])
-    # Fix the following numbers
-    if home_velocity > 0.4:
-        home_velocity = 0
-    if away_velocity > 0.4:
-        away_velocity = 0
     return (game_time, home_velocity, away_velocity)
 
 def plot_velocity_frame(game, frame_number, ax, highlight_player=None):
@@ -90,7 +96,8 @@ def plot_velocity_frame(game, frame_number, ax, highlight_player=None):
         highlight_player (str): Name of player to highlight (by making their outline thicker).
             if None, no player is highlighted
 
-    Returns: plt.fig of frame from game
+    Returns: plt.fig of frame from game with subplot of velocity.
+        see README.md for example
     """
     (game_time, x_pos, y_pos, colors, sizes, quarter, shot_clock, game_clock, edges, universe_time) = game._get_moment_details(frame_number, highlight_player=highlight_player)
     (commentary_script, score) = game._get_commentary(game_time)
@@ -114,7 +121,19 @@ def plot_velocity_frame(game, frame_number, ax, highlight_player=None):
 
 
 def watch_play_velocities(game, game_time, length, highlight_player=None):
-    
+    """
+    Creates an movie of a play which includes a plot of the real-time velocities.
+
+    Args:
+        game (Game): Game instance to get data from
+        game_time (int): time in game to start video (seconds into the game).
+        length (int): length of play to watch (seconds)
+        highlight_player (str): If not None, video will highlight the circle of
+            the inputed player for easy tracking, and also display that players velocity
+
+    Returns: an instance of self, and outputs video file of play with velocity plot
+        see README.md for example
+    """
     starting_frame = game.moments[game.moments.game_time.round() == game_time].index.values[0]
     ending_frame = game.moments[game.moments.game_time.round() == game_time + length].index.values[0]
         
@@ -149,7 +168,7 @@ def watch_play_velocities(game, game_time, length, highlight_player=None):
             ax1.legend(fontsize=18)
         plt.savefig('temp/' + str(index) + '.png')
         plt.close()
-    
+
     # Make video of each frame
     command = 'ffmpeg -framerate 20 -start_number 0 -i %d.png -c:v libx264 -r 30 -pix_fmt yuv420p -vf "scale=trunc(iw/2)*2:trunc(ih/2)*2" {starting_frame}.mp4'.format(starting_frame=starting_frame)
     os.chdir('temp')
@@ -160,6 +179,8 @@ def watch_play_velocities(game, game_time, length, highlight_player=None):
     for file in os.listdir('./temp'):
         if os.path.splitext(file)[1] == '.png':
             os.remove('./temp/{file}'.format(file=file))
+
+    return self
 
 def get_velocity_statistics(date, home_team, away_team, write_file=False,
                            write_score=False, write_game=False):
@@ -214,7 +235,7 @@ def get_velocity_statistics(date, home_team, away_team, write_file=False,
 
     return (home_offense_velocities, home_defense_velocities,
             away_offense_velocities, away_defense_velocities)
-            
+
 def write_spacing(gamelist):
     """
     Writes all spacing statistics to data/spacing directory for each game
@@ -225,8 +246,6 @@ def write_spacing(gamelist):
         except:
             with open('errorlog_velocity.txt', 'a') as myfile:
                 myfile.write("{game} Could not extract velocity data\n".format(game=game))
-
-    
 
 if __name__ == "__main__":
     """
@@ -240,9 +259,9 @@ if __name__ == "__main__":
     #plot_defense_spacing_vs_wins(spacing_data)
     #plot_team_defensive_spacing(spacing_data)
     #plot_teams_ability_to_space_defense(spacing_data)
-    
+
     game = Game('01.08.2016', 'POR', 'GSW')
-    watch_play_velocities(game, game_time=2007, length=10, highlight_player=None)
+    watch_play_velocities(game, game_time=7, length=54, highlight_player='Stephen Curry')
 
 
 
