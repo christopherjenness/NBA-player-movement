@@ -6,18 +6,6 @@ Library for retrieving basektball player-tracking and play-by-play data.
 # brew install curl
 # brew install ffmpeg --with-libvpx
 
-"""
-TODO velocity analysis.  Does average offensive velocity have impact on points scored?  
-Also visualization of velocity during play (team and player)
-
-Roadmap:
-- Readme file
-- Velocity Analysis scripts
-- Velocity by quarter? or just compare 1st and 4th quarter
-- Clean up movies
-- One more analysis
-"""
-
 import os
 import json
 import pandas as pd
