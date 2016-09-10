@@ -6,6 +6,9 @@ Library for retrieving basektball player-tracking and play-by-play data.
 # brew install curl
 # brew install ffmpeg --with-libvpx
 
+import matplotlib
+matplotlib.use('TkAgg')
+
 import os
 import json
 import pandas as pd
@@ -14,6 +17,7 @@ from matplotlib.patches import Circle, Rectangle, Arc, Polygon
 import numpy as np
 import seaborn as sns
 from scipy.spatial import ConvexHull
+from subprocess import Popen, PIPE
 
 os.chdir('/Users/christopherjenness/Desktop/Personal/SportVU/NBA-player-movement')
 os.system('mkdir temp')
@@ -389,7 +393,7 @@ class Game(object):
         quarter = current_moment.quarter
         return (game_time, x_pos, y_pos, colors, sizes, quarter, shot_clock, game_clock, edges, universe_time)
 
-    def plot_frame(self, frame_number, highlight_player=None, commentary=True, show_spacing=False):
+    def plot_frame(self, frame_number, highlight_player=None, commentary=True, show_spacing=False, pipe=None):
         """
         Creates an individual the frame of game.
         Outputs .png file in {cwd}/temp
@@ -438,10 +442,19 @@ class Game(object):
             polygon = Polygon(hull_points, alpha=0.3, color='gray')
             ax=plt.gca()
             ax.add_patch(polygon)
-        plt.savefig('temp/{frame_number}.png'.format(frame_number=frame_number), bbox_inches='tight')
+        if pipe:
+            fig.canvas.draw()
+            string = fig.canvas.tostring_argb()
+
+            pipe.stdin.write(string)
+
+            #plt.savefig(pipe.stdin, format = 'png',  bbox_inches='tight')
+            
+        else:
+            plt.savefig('temp/{frame_number}.png'.format(frame_number=frame_number), bbox_inches='tight')
         plt.close()
         return self
-
+        
     def _in_formation(self, frame_number):
         """
         This is a complicated method to explain, but it is actually very simple.
@@ -578,40 +591,62 @@ class Game(object):
         start_frame = self.get_frame(round(self.moments.ix[test_frame].game_time + 2))
         return (start_frame, end_frame)
         
-"""
+    def animate_play(self, game_time, length, highlight_player=None, commentary=True, show_spacing=False):
+        """
+        Method for viewing plays in game.
+        Outputs video file of play in {cwd}/temp
+
+        Args:
+            game_time (int): time in game to start video (seconds into the game).
+                Currently game_time can also be an tuple of length two with (starting_frame, ending_frame)
+                if you want to watch a play using frames instead of game time.
+            length (int): length of play to watch (seconds)
+            highlight_player (str): If not None, video will highlight the circle of
+                the inputed player for easy tracking.
+
+        Returns: an instance of self, and outputs video file of play
+        """
+        if type(game_time) == tuple:
+            starting_frame = game_time[0]
+            ending_frame = game_time[1]
+        else:
+            # Get starting and ending frame from requested game_time and length
+            starting_frame = self.moments[self.moments.game_time.round() == game_time].index.values[0]
+            ending_frame = self.moments[self.moments.game_time.round() == game_time + length].index.values[0]
+
+        # Make video of each frame
+
+        outf = 'test.mp4'
+        rate = 20
+        cmdstring = ('ffmpeg',
+                     '-r', '%d' % rate,
+                     '-vcodec', 'png',
+                     '-i', 'pipe:', outf
+                     )
+        outf = 'ffmpeg.mp4'
+        cmdstring = ('ffmpeg', 
+            '-y', '-r', '30', # overwrite, 30fps
+            '-s', '%dx%d' % (960, 480), # size of image string
+            '-pix_fmt', 'argb', # format
+            '-f', 'rawvideo',  '-i', '-', # tell ffmpeg to expect raw video from the pipe
+            '-vcodec', 'mpeg4', outf) # output encoding 
+            
+        p = Popen(cmdstring, stdin=PIPE)
+        
+        for frame in range(starting_frame, ending_frame):
+            self.plot_frame(frame, highlight_player=highlight_player, commentary=commentary, show_spacing=show_spacing, pipe=p)
+        
+        p.stdin.close()
+        p.wait()
+        #Delete images
+        for file in os.listdir('./temp'):
+            if os.path.splitext(file)[1] == '.png':
+                os.remove('./temp/{file}'.format(file=file))
+
+        return self
+
+
 game = Game('01.08.2016', 'POR', 'GSW')
-
-game.watch_play(121, 10, commentary=False, show_spacing='home')
-
-
-import matplotlib.pyplot as plt
-from matplotlib.patches import Ellipse, Polygon
-
-points = np.random.rand(30, 2)
-hull = ConvexHull(points)
-Polygon(np.array(thehull))
-plt.scatter(thehull)
-x = list(points[hull.vertices,0])
-y =list(points[hull.vertices,1])
-thehull = list(zip(x, y))
- 
-plt.plot(points[hull.vertices,0], points[hull.vertices,1], 'r--', lw=2)
-fig = plt.figure()
-ax1 = fig.add_subplot(111)
-coll = PolyCollection(v)
-ax.add_collection(coll)
-v = np.array([[1,1], [1, 2], [3, 3], ])
-plt.Polygon(thehull) 
-
-
-
-from matplotlib.collections import PolyCollection
-import matplotlib.patches as mpatches
-polygon = Polygon(thehull, alpha=0.3, color='gray')
-fig1 = plt.figure()
-ax = plt.gca()
-ax.add_patch(polygon)
-hull.vertices
-"""
-
+game.animate_play(game_time=6, length=3, commentary=False)
+game.watch_play(game_time=6, length=3, commentary=False)
 
