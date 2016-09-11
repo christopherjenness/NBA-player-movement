@@ -591,10 +591,12 @@ class Game(object):
         start_frame = self.get_frame(round(self.moments.ix[test_frame].game_time + 2))
         return (start_frame, end_frame)
         
-    def animate_play(self, game_time, length, highlight_player=None, commentary=True, show_spacing=False):
+    def animate_play(self, game_time, length, highlight_player=None, commentary=True, show_spacing=None):
         """
-        Method for viewing plays in game.
-        Outputs video file of play in {cwd}/temp
+        Method for animating plays in game.
+        Outputs video file of play in {cwd}/temp.
+        Individual frames are streamed directly to ffmpeg without writing them
+        to the disk, which is a great speed improvement
 
         Args:
             game_time (int): time in game to start video (seconds into the game).
@@ -603,6 +605,10 @@ class Game(object):
             length (int): length of play to watch (seconds)
             highlight_player (str): If not None, video will highlight the circle of
                 the inputed player for easy tracking.
+            commentary (bool): Whether to include play-by-play commentary in 
+                the animation
+            show_spacing (str) in ['home', 'away']: show convex hull spacing of home or away
+                team.  If None, does not show spacing.
 
         Returns: an instance of self, and outputs video file of play
         """
@@ -615,38 +621,25 @@ class Game(object):
             ending_frame = self.moments[self.moments.game_time.round() == game_time + length].index.values[0]
 
         # Make video of each frame
-
-        outf = 'test.mp4'
-        rate = 20
-        cmdstring = ('ffmpeg',
-                     '-r', '%d' % rate,
-                     '-vcodec', 'png',
-                     '-i', 'pipe:', outf
-                     )
-        outf = 'ffmpeg.mp4'
+        filename = "./temp/{game_time}.mp4".format(game_time=game_time)
         cmdstring = ('ffmpeg', 
-            '-y', '-r', '30', # overwrite, 30fps
+            '-y', '-r', '20', # 30fps
             '-s', '%dx%d' % (960, 480), # size of image string
-            '-pix_fmt', 'argb', # format
-            '-f', 'rawvideo',  '-i', '-', # tell ffmpeg to expect raw video from the pipe
-            '-vcodec', 'mpeg4', outf) # output encoding 
-            
-        p = Popen(cmdstring, stdin=PIPE)
+            '-pix_fmt', 'argb', # Stream argb data from matplotlib
+            '-f', 'rawvideo',  '-i', '-',
+            '-vcodec', 'mpeg4', filename) 
         
+        #Stream plots to pipe
+        pipe = Popen(cmdstring, stdin=PIPE)
         for frame in range(starting_frame, ending_frame):
-            self.plot_frame(frame, highlight_player=highlight_player, commentary=commentary, show_spacing=show_spacing, pipe=p)
-        
-        p.stdin.close()
-        p.wait()
-        #Delete images
-        for file in os.listdir('./temp'):
-            if os.path.splitext(file)[1] == '.png':
-                os.remove('./temp/{file}'.format(file=file))
-
+            self.plot_frame(frame, highlight_player=highlight_player, 
+                            commentary=commentary, show_spacing=show_spacing, 
+                            pipe=pipe)
+        pipe.stdin.close()
+        pipe.wait()
         return self
 
-
 game = Game('01.08.2016', 'POR', 'GSW')
-game.animate_play(game_time=6, length=3, commentary=False)
-game.watch_play(game_time=6, length=3, commentary=False)
+game.animate_play(game_time=6, length=3, commentary=True)
+
 
