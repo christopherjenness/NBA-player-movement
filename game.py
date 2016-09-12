@@ -445,14 +445,21 @@ class Game(object):
         if pipe:
             fig.canvas.draw()
             string = fig.canvas.tostring_argb()
-
             pipe.stdin.write(string)
+            plt.close()
+            fig = plt.figure(figsize=(12, 6))
+            plt.figtext(.2, .4, commentary_script, size=20)
+            fig.canvas.draw()
+            string = fig.canvas.tostring_argb()
+            pipe.stdin.write(string)
+            plt.close()
+            
 
             #plt.savefig(pipe.stdin, format = 'png',  bbox_inches='tight')
             
         else:
             plt.savefig('temp/{frame_number}.png'.format(frame_number=frame_number), bbox_inches='tight')
-        plt.close()
+            plt.close()
         return self
         
     def _in_formation(self, frame_number):
@@ -622,9 +629,10 @@ class Game(object):
 
         # Make video of each frame
         filename = "./temp/{game_time}.mp4".format(game_time=game_time)
+        size = (960, 960)
         cmdstring = ('ffmpeg', 
-            '-y', '-r', '20', # 30fps
-            '-s', '%dx%d' % (960, 480), # size of image string
+            '-y', '-r', '20', # 0fps
+            '-s', '%dx%d' % size, # size of image string
             '-pix_fmt', 'argb', # Stream argb data from matplotlib
             '-f', 'rawvideo',  '-i', '-',
             '-vcodec', 'mpeg4', filename) 
@@ -638,8 +646,18 @@ class Game(object):
         pipe.stdin.close()
         pipe.wait()
         return self
-
+"""        
+command = 'ffmpeg -framerate 20 -start_number {starting_frame} -i %d.png -c:v libx264 -r 30 -pix_fmt yuv420p -vf "scale=trunc(iw/2)*2:trunc(ih/2)*2" {starting_frame}.mp4'.format(starting_frame=starting_frame)
+"""
 game = Game('01.08.2016', 'POR', 'GSW')
-game.animate_play(game_time=6, length=3, commentary=True)
+game.animate_play(game_time=10, length=5, commentary=True)
+game.plot_frame(10, commentary=True)
+
+
+
+
+
+
+
 
 
