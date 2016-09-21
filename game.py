@@ -243,7 +243,7 @@ class Game(object):
 
         Returns: an instance of self, and outputs video file of play
         """
-        warnings.warn("watch_play is extremely slow.  Use animate_play for similar functionality, but greater efficiency", DeprecationWarning)
+        warnings.warn("watch_play is extremely slow.  Use animate_play for similar functionality, but greater efficiency")
         
         if type(game_time) == tuple:
             starting_frame = game_time[0]
@@ -467,11 +467,12 @@ class Game(object):
             string = fig.canvas.tostring_argb()
             pipe.stdin.write(string)
             plt.close()
-            fig = plt.figure(figsize=(12, 6))
-            plt.figtext(.2, .4, commentary_script, size=20)
-            fig.canvas.draw()
-            string = fig.canvas.tostring_argb()
-            pipe.stdin.write(string)
+            if commentary: 
+                fig = plt.figure(figsize=(12, 6))
+                plt.figtext(.2, .4, commentary_script, size=20)
+                fig.canvas.draw()
+                string = fig.canvas.tostring_argb()
+                pipe.stdin.write(string)
             plt.close()
 
         else:
@@ -662,7 +663,10 @@ class Game(object):
 
         # Make video of each frame
         filename = "./temp/{game_time}.mp4".format(game_time=game_time)
-        size = (960, 960)
+        if commentary:
+            size = (960, 960)
+        else:
+            size = (960, 480)
         cmdstring = ('ffmpeg', 
             '-y', '-r', '20', # 0fps
             '-s', '%dx%d' % size, # size of image string
@@ -683,7 +687,8 @@ class Game(object):
 command = 'ffmpeg -framerate 20 -start_number {starting_frame} -i %d.png -c:v libx264 -r 30 -pix_fmt yuv420p -vf "scale=trunc(iw/2)*2:trunc(ih/2)*2" {starting_frame}.mp4'.format(starting_frame=starting_frame)
 """
 game = Game('01.08.2016', 'POR', 'GSW')
-game.animate_play(game_time=10, length=10, commentary=True)
+game.animate_play(game_time=10, length=2, commentary=True)
+game.animate_play(game_time=11, length=2, commentary=False)
 
 
 
