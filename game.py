@@ -683,19 +683,3 @@ class Game(object):
         pipe.stdin.close()
         pipe.wait()
         return self
-"""        
-command = 'ffmpeg -framerate 20 -start_number {starting_frame} -i %d.png -c:v libx264 -r 30 -pix_fmt yuv420p -vf "scale=trunc(iw/2)*2:trunc(ih/2)*2" {starting_frame}.mp4'.format(starting_frame=starting_frame)
-"""
-game = Game('01.08.2016', 'POR', 'GSW')
-game.animate_play(game_time=10, length=2, commentary=True)
-game.animate_play(game_time=11, length=2, commentary=False)
-
-
-
-
-
-
-
-
-
-
