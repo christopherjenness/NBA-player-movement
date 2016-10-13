@@ -17,6 +17,9 @@ import pickle
 import seaborn as sns
 import os
 
+#Initialize Project
+os.chdir('/Users/christopherjenness/Desktop/Personal/SportVU/NBA-player-movement')
+
 def extract_games():
     """
     Extract games from allgames.txt
@@ -252,7 +255,7 @@ if __name__ == "__main__":
     """
 
     all_games = extract_games()
-    #write_spacing(all_games)
+    write_spacing(all_games)
     #spacing_data = get_spacing_df(all_games)
     #plot_offense_vs_defense_spacing(spacing_data)
     #plot_defense_spacing_vs_score(spacing_data)
@@ -260,8 +263,6 @@ if __name__ == "__main__":
     #plot_team_defensive_spacing(spacing_data)
     #plot_teams_ability_to_space_defense(spacing_data)
 
-    game = Game('01.08.2016', 'POR', 'GSW')
-    watch_play_velocities(game, game_time=7, length=54, highlight_player='Stephen Curry')
 
 
 
