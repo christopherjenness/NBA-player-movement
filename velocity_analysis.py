@@ -239,7 +239,7 @@ def get_velocity_statistics(date, home_team, away_team, write_file=False,
     return (home_offense_velocities, home_defense_velocities,
             away_offense_velocities, away_defense_velocities)
 
-def write_spacing(gamelist):
+def write_velocity(gamelist):
     """
     Writes all spacing statistics to data/spacing directory for each game
     """
@@ -255,8 +255,8 @@ if __name__ == "__main__":
     """
 
     all_games = extract_games()
-    write_spacing(all_games)
-    #spacing_data = get_spacing_df(all_games)
+    #write_velocity(all_games)
+    spacing_data = get_spacing_df(all_games)
     #plot_offense_vs_defense_spacing(spacing_data)
     #plot_defense_spacing_vs_score(spacing_data)
     #plot_defense_spacing_vs_wins(spacing_data)
