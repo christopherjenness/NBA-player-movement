@@ -194,7 +194,7 @@ def get_velocity_statistics(date, home_team, away_team, write_file=False,
         date (str): date of game in form 'MM.DD.YYYY'.  Example: '01.01.2016'
         home_team (str): home team in form 'XXX'. Example: 'TOR'
         away_team (str): away team in form 'XXX'. Example: 'CHI'
-        write_file (bool): If True, write pickle file of spacing statistics into data/velocity directory
+        write_file (bool): If True, write pickle file of velocity statistics into data/velocity directory
         write_score (bool): If True, write pickle file of game score into data/score directory
         write_game (bool): If True, write pickle file of tracking data into data/game directory
             Note: This file is ~100MB.
@@ -227,7 +227,7 @@ def get_velocity_statistics(date, home_team, away_team, write_file=False,
                 away_offense_velocities.append((frame, game_time, away_velocity))
     results = (home_offense_velocities, home_defense_velocities,
                away_offense_velocities, away_defense_velocities)
-    # Write spacing data to disk
+    # Write velocity data to disk
     if write_file:
         filename = "{date}-{away_team}-{home_team}".format(date=date, away_team=away_team, home_team=home_team)
         pickle.dump(results, open('data/velocity/' + filename + '.p', "wb"))
@@ -245,26 +245,40 @@ def write_velocity(gamelist):
     """
     for game in gamelist:
         try:
-            get_velocity_statistics(game[0], game[1], game[2], write_file=True)
+            get_velocity_statistics(game[0], game[1], game[2], write_file=True, write_score=True)
         except:
             with open('errorlog_velocity.txt', 'a') as myfile:
                 myfile.write("{game} Could not extract velocity data\n".format(game=game))
-
+                
+def analyze_velocity(gamelist):
+    for game in gamelist:
+        filename = "{date}-{away_team}-{home_team}".format(date=game[0], away_team=game[2], home_team=game[1])
+        try:
+            velocity_data = pickle.load(open('data/velocity/12.31.2015-POR-UTA.p', 'rb'))
+            home_offense_velocities = pd.DataFrame(velocity_data[0])
+            home_defense_velocities = pd.DataFrame(velocity_data[1])
+            away_offense_velocities = pd.DataFrame(velocity_data[2])
+            away_defense_velocities = pd.DataFrame(velocity_data[3])
+        except:
+            print ('velocity data not written for: ', game)
 if __name__ == "__main__":
     """
     """
 
     all_games = extract_games()
-    #write_velocity(all_games)
-    spacing_data = get_spacing_df(all_games)
-    #plot_offense_vs_defense_spacing(spacing_data)
-    #plot_defense_spacing_vs_score(spacing_data)
-    #plot_defense_spacing_vs_wins(spacing_data)
-    #plot_team_defensive_spacing(spacing_data)
-    #plot_teams_ability_to_space_defense(spacing_data)
+    write_velocity(all_games)
+    #spacing_data = get_spacing_df(all_games)
+
+"""
+import pickle 
+import pandas as pd
+import seaborn as sns
+import matplotlib.pyplot as plt
+test = pickle.load(open('data/velocity/12.31.2015-POR-UTA.p', 'rb'))
+type(test)
 
 
-
-
-
-
+df = pd.DataFrame(test[0])
+plt.plot(df[0], df[2])
+df[2].mean()
+"""
