@@ -2,8 +2,6 @@
 Analysis of NBA player velocities.
 
 TODO: 
-- Show player annotation somewhere when highlight_player
-- individual player velocities
 - analysis
 - 1st vs 4th quarter? (measure of tiredness) - compare points made in 1st vs 4th quarter
 - compare velocities before made and missed shots
