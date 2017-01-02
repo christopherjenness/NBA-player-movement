@@ -250,16 +250,20 @@ def write_velocity(gamelist):
                 myfile.write("{game} Could not extract velocity data\n".format(game=game))
                 
 def analyze_velocity(gamelist):
+    data = []
     for game in gamelist:
+        print(1)
         filename = "{date}-{away_team}-{home_team}".format(date=game[0], away_team=game[2], home_team=game[1])
         
-        # Load velocity data
+        # Load velocity/score data
         try:
-            velocity_data = pickle.load(open('data/velocity/' + filename, 'rb'))
+            velocity_data = pickle.load(open('data/velocity/' + filename + '.p', 'rb'))
+            score_data = pickle.load(open('data/score/' + filename + '.p', 'rb'))
         except:
             print ('velocity data not written for: ', game)
-            return
+            continue
         
+        away_score, home_score = extract_scores(score_data)
         # Organize velocity data by team and offense/defense 
         HOV = pd.DataFrame(velocity_data[0])
         HDV = pd.DataFrame(velocity_data[1])
@@ -274,6 +278,11 @@ def analyze_velocity(gamelist):
         AOV = AOV[AOV[2] < 0.15]
         HDV = HDV[HDV[2] < 0.15]
         ADV = ADV[ADV[2] < 0.15]
+        
+        game_data = (HOV[2].mean(), AOV[2].mean(), HDV[2].mean(), ADV[2].mean(),
+                     away_score, home_score)
+        data.append(game_data)
+    return data
         
 def extract_scores(score_data):
     """
@@ -300,6 +309,10 @@ if __name__ == "__main__":
     #spacing_data = get_spacing_df(all_games)
 """
 
+######################
+# Begin Scratch Work #
+######################
+
 import pickle 
 import pandas as pd
 import seaborn as sns
@@ -308,7 +321,21 @@ all_games = extract_games()
 first_game = all_games[0]
 
 velocity_data = pickle.load(open('data/velocity/12.22.2015-LAL-DEN.p', 'rb'))
+
 score_data =  pickle.load(open('data/score/12.22.2015-LAL-DEN.p', 'rb'))
+
+dat = analyze_velocity(all_games[:100])
+df = pd.DataFrame(dat)
+plt.hist(df[1])
+
+plt.scatter(df[0], df[2])
+plt.scatter(df[1], df[3])
+
+plt.scatter(df[1], df[2])
+plt.scatter(df[1], df[2])
+
+a = list(df[5])
+b = list(df[0])
 
 print(extract_scores(score_data))
 
