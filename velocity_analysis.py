@@ -24,7 +24,7 @@ def extract_games():
     Extract games from allgames.txt
 
     Returns:
-        list: list of games.  Each element is list is (date, home_team, away_team)
+        list: list of games.  Each element is list is tuple (date, home_team, away_team)
         example element: ('01.01.2016', 'TOR', 'CHI')
     """
 
@@ -252,15 +252,45 @@ def write_velocity(gamelist):
 def analyze_velocity(gamelist):
     for game in gamelist:
         filename = "{date}-{away_team}-{home_team}".format(date=game[0], away_team=game[2], home_team=game[1])
+        
+        # Load velocity data
         try:
             velocity_data = pickle.load(open('data/velocity/' + filename, 'rb'))
-            home_offense_velocities = pd.DataFrame(velocity_data[0])
-            home_defense_velocities = pd.DataFrame(velocity_data[1])
-            away_offense_velocities = pd.DataFrame(velocity_data[2])
-            away_defense_velocities = pd.DataFrame(velocity_data[3])
         except:
             print ('velocity data not written for: ', game)
-    return
+            return
+        
+        # Organize velocity data by team and offense/defense 
+        HOV = pd.DataFrame(velocity_data[0])
+        HDV = pd.DataFrame(velocity_data[1])
+        AOV = pd.DataFrame(velocity_data[2])
+        ADV = pd.DataFrame(velocity_data[3])
+        
+        # Cut out erroneous velocity data
+        # This is due to Frame-skipping in the SVU data
+        # For example, from the last frame of a quarter to the
+        # first frame of the next quarter, etc.
+        HOV = HOV[HOV[2] < 0.15]
+        AOV = AOV[AOV[2] < 0.15]
+        HDV = HDV[HDV[2] < 0.15]
+        ADV = ADV[ADV[2] < 0.15]
+        
+def extract_scores(score_data):
+    """
+    Organizes score data from string to tuple
+    
+    Args:
+        score_data (str): string of form 'AWAYSCORE - HOMESCORE'
+            Example: '111 - 105'
+            
+    Returns:
+        scores (tuple): tuple of form (away_score, home_score) where
+            each score is an int
+    """
+    away_score = int(score_data.split('-')[0])
+    home_score = int(score_data.split('-')[1])
+    scores = (away_score, home_score)
+    return scores
 
 
 """
@@ -268,27 +298,25 @@ if __name__ == "__main__":
     all_games = extract_games()
     write_velocity(all_games)
     #spacing_data = get_spacing_df(all_games)
-
+"""
 
 import pickle 
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
-test = pickle.load(open('data/velocity/12.31.2015-POR-UTA.p', 'rb'))
-type(test)
-
-
-df = pd.DataFrame(test[0])
-plt.plot(df[0], df[2])
-df[2].mean()
-
+all_games = extract_games()
+first_game = all_games[0]
 
 velocity_data = pickle.load(open('data/velocity/12.22.2015-LAL-DEN.p', 'rb'))
+score_data =  pickle.load(open('data/score/12.22.2015-LAL-DEN.p', 'rb'))
+
+print(extract_scores(score_data))
 
 HOV = pd.DataFrame(velocity_data[0])
 AOV = pd.DataFrame(velocity_data[2])
 HDV = pd.DataFrame(velocity_data[1])
 ADV = pd.DataFrame(velocity_data[3])
+
 
 
 HOV = HOV[HOV[2] < 0.15]
@@ -333,5 +361,4 @@ plt.figure()
 sns.violinplot(x=HV[3] , y=HV[2])
 plt.show()
 
-"""
 
