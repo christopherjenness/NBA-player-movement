@@ -14,6 +14,7 @@ import matplotlib.pyplot as plt
 import pickle
 import seaborn as sns
 import os
+import pandas as pd
 
 #Initialize Project
 os.chdir('/Users/christopherjenness/Desktop/Personal/SportVU/NBA-player-movement')
@@ -23,8 +24,8 @@ def extract_games():
     Extract games from allgames.txt
 
     Returns:
-        list: list of games.  Each element is list is [date, home_team, away_team]
-        example element: ['01.01.2016', 'TOR', 'CHI']
+        list: list of games.  Each element is list is (date, home_team, away_team)
+        example element: ('01.01.2016', 'TOR', 'CHI')
     """
 
     games = []
@@ -34,7 +35,7 @@ def extract_games():
             date = "{game[0]}.{game[1]}.{game[2]}".format(game=game)
             away = game[3]
             home = game[5]
-            games.append([date, home, away])
+            games.append((date, home, away))
     return games
 
 def calculate_velocities(game, frame, highlight_player=None):
@@ -252,22 +253,23 @@ def analyze_velocity(gamelist):
     for game in gamelist:
         filename = "{date}-{away_team}-{home_team}".format(date=game[0], away_team=game[2], home_team=game[1])
         try:
-            velocity_data = pickle.load(open('data/velocity/12.31.2015-POR-UTA.p', 'rb'))
+            velocity_data = pickle.load(open('data/velocity/' + filename, 'rb'))
             home_offense_velocities = pd.DataFrame(velocity_data[0])
             home_defense_velocities = pd.DataFrame(velocity_data[1])
             away_offense_velocities = pd.DataFrame(velocity_data[2])
             away_defense_velocities = pd.DataFrame(velocity_data[3])
         except:
             print ('velocity data not written for: ', game)
-if __name__ == "__main__":
-    """
-    """
+    return
 
+
+"""
+if __name__ == "__main__":
     all_games = extract_games()
     write_velocity(all_games)
     #spacing_data = get_spacing_df(all_games)
 
-"""
+
 import pickle 
 import pandas as pd
 import seaborn as sns
@@ -279,4 +281,57 @@ type(test)
 df = pd.DataFrame(test[0])
 plt.plot(df[0], df[2])
 df[2].mean()
+
+
+velocity_data = pickle.load(open('data/velocity/12.22.2015-LAL-DEN.p', 'rb'))
+
+HOV = pd.DataFrame(velocity_data[0])
+AOV = pd.DataFrame(velocity_data[2])
+HDV = pd.DataFrame(velocity_data[1])
+ADV = pd.DataFrame(velocity_data[3])
+
+
+HOV = HOV[HOV[2] < 0.15]
+AOV = AOV[AOV[2] < 0.15]
+HDV = HDV[HDV[2] < 0.15]
+ADV = ADV[ADV[2] < 0.15]
+
+
+
+print(HOV.head())
+plt.figure()
+plt.hist(AOV[2], bins=100, alpha=0.5)
+plt.hist(ADV[2], bins=100, alpha=0.5)
+plt.title('AWAY')
+plt.show()
+
+plt.figure()
+plt.title('HOME')
+plt.hist(HOV[2], bins=100, alpha=0.5)
+plt.hist(HDV[2], bins=100, alpha=0.5)
+plt.show()
+
+
+print(HOV[2].mean())
+print(HDV[2].mean())
+print(AOV[2].mean())
+print(ADV[2].mean())
+
+print(HOV[2].std())
+print(HDV[2].std())
+print(AOV[2].std())
+print(ADV[2].std())
+
+HDV[3] = 'H'
+HOV[3] = 'O'
+
+HV = pd.concat((HDV, HOV))
+print('-------')
+print(HV.head())
+
+plt.figure()
+sns.violinplot(x=HV[3] , y=HV[2])
+plt.show()
+
 """
+
