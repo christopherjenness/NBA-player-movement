@@ -5,9 +5,9 @@ This library contains useful methods for visualizing and analyzing NBA player tr
 The data is located here and contains all player and ball locations for NBA games from the 2015-16 season.  Play-by-play data is obtained from nba.stats.com.
 
 ## Visualization
-To visualize games from the tracking data, the `game` class in `game.py` is used.
+To visualize games from the tracking data, the `Game` class in `game.py` is used.
 ```python
-from Game import game
+from game import Game
 game = Game('01.08.2016', 'POR', 'GSW')
 game.watch_play(game_time=6, length=120, commentary=False)
 ```
