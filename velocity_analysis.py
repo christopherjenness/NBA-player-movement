@@ -2,10 +2,10 @@
 Analysis of NBA player velocities.
 
 TODO: 
-- analysis
 - 1st vs 4th quarter? (measure of tiredness) - compare points made in 1st vs 4th quarter
 - compare velocities before made and missed shots
 - display a no-velocity vs high-velocity play
+- Team speed correlations like: age, wins, DRTG, ORTG, etc
 """
 
 import numpy as np
@@ -252,8 +252,10 @@ def write_velocity(gamelist):
 def analyze_velocity(gamelist):
     data = []
     for game in gamelist:
-        print(1)
-        filename = "{date}-{away_team}-{home_team}".format(date=game[0], away_team=game[2], home_team=game[1])
+        away_team = game[2]
+        home_team = game[1]
+        print(away_team, home_team)
+        filename = "{date}-{away_team}-{home_team}".format(date=game[0], away_team=away_team, home_team=home_team)
         
         # Load velocity/score data
         try:
@@ -280,7 +282,7 @@ def analyze_velocity(gamelist):
         ADV = ADV[ADV[2] < 0.15]
         
         game_data = (HOV[2].mean(), AOV[2].mean(), HDV[2].mean(), ADV[2].mean(),
-                     away_score, home_score)
+                     away_score, home_score, away_team, home_team)
         data.append(game_data)
     return data
         
@@ -324,14 +326,44 @@ velocity_data = pickle.load(open('data/velocity/12.22.2015-LAL-DEN.p', 'rb'))
 
 score_data =  pickle.load(open('data/score/12.22.2015-LAL-DEN.p', 'rb'))
 
-dat = analyze_velocity(all_games[:100])
+dat = analyze_velocity(all_games)
 df = pd.DataFrame(dat)
-plt.hist(df[1])
+home = df[[0, 2, 5, 7]]
+away = df[[1, 3, 4, 6]]
+home.columns = ['Off', 'Def', 'Pts', 'Tm']
+away.columns = ['Off', 'Def', 'Pts', 'Tm']
+all_dat = pd.concat((home, away))
+ave = all_dat.groupby('Tm').mean()
+sns.barplot(x='Tm', y='Off', data=all_dat, order=ave.sort_values('Off').index, color= sns.xkcd_rgb["pale red"])
+plt.ylim(0.02, 0.03)
+locs, labels = plt.xticks()
+plt.setp(labels, rotation=90)
+plt.ylabel('Mean Offensive Velocity')
+plt.xlabel('')
+
+sns.barplot(x='Tm', y='Def', data=all_dat, order=ave.sort_values('Def').index, color= sns.xkcd_rgb["pale red"])
+plt.ylim(0.016, 0.024)
+locs, labels = plt.xticks()
+plt.setp(labels, rotation=90)
+plt.ylabel('Mean Defensive Velocity')
+plt.xlabel('')
+
+plt.scatter(ave['Off'], ave['Def'])
+plt.xlim(0.024, 0.028)
+plt.ylim(0.02, 0.024)
+
+
 
 plt.scatter(df[0], df[2])
 plt.scatter(df[1], df[3])
 
-plt.scatter(df[1], df[2])
+plt.scatter(df[0], df[5])
+plt.scatter(df[1], df[4])
+
+plt.scatter(df[0] - df[3], df[5])
+plt.scatter(df[1] - df[2], df[4])
+
+plt.scatter(df[0], df[3])
 plt.scatter(df[1], df[2])
 
 a = list(df[5])
