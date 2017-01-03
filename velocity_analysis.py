@@ -249,7 +249,7 @@ def write_velocity(gamelist):
             with open('errorlog_velocity.txt', 'a') as myfile:
                 myfile.write("{game} Could not extract velocity data\n".format(game=game))
                 
-def analyze_velocity(gamelist):
+def extract_velocity(gamelist):
     data = []
     for game in gamelist:
         away_team = game[2]
@@ -283,7 +283,7 @@ def analyze_velocity(gamelist):
         
         game_data = (HOV[2].mean(), AOV[2].mean(), HDV[2].mean(), ADV[2].mean(),
                      away_score, home_score, away_team, home_team)
-        data.append(game_data)
+        data.append(pd.DataFrame(game_data))
     return data
     
 def analyze_fatigue(gamelist):
@@ -336,6 +336,40 @@ def analyze_fatigue(gamelist):
         game_data = (df, away_score, home_score, away_team, home_team)
         data.append(game_data)
     return data
+    
+def velocity_plots(df):
+    
+    #Organize velocity data
+    home = df[[0, 2, 5, 7]]
+    away = df[[1, 3, 4, 6]]
+    home.columns = ['Off', 'Def', 'Pts', 'Tm']
+    away.columns = ['Off', 'Def', 'Pts', 'Tm']
+    all_dat = pd.concat((home, away))
+    ave = all_dat.groupby('Tm').mean()
+    
+    #Plot of offense velocity by team
+    plt.figure()
+    sns.barplot(x='Tm', y='Off', data=all_dat, order=ave.sort_values('Off').index, color= sns.xkcd_rgb["pale red"])
+    plt.ylim(0.02, 0.03)
+    locs, labels = plt.xticks()
+    plt.setp(labels, rotation=90)
+    plt.ylabel('Mean Offensive Velocity')
+    plt.xlabel('')
+    plt.savefig('examples/VelocityOffenseTeams')
+    
+    #Plot of defense velocity by team
+    plt.figure
+    sns.barplot(x='Tm', y='Def', data=all_dat, order=ave.sort_values('Def').index, color= sns.xkcd_rgb["pale red"])
+    plt.ylim(0.016, 0.024)
+    locs, labels = plt.xticks()
+    plt.setp(labels, rotation=90)
+    plt.ylabel('Mean Defensive Velocity')
+    plt.xlabel('')
+    plt.savefig('examples/VelocityDefenseTeams')
+    
+    plt.scatter(ave['Off'], ave['Def'])
+    plt.xlim(0.024, 0.028)
+    plt.ylim(0.02, 0.024)    
         
 def extract_scores(score_data):
     """
@@ -355,30 +389,21 @@ def extract_scores(score_data):
     return scores
 
 
-"""
+
 if __name__ == "__main__":
     all_games = extract_games()
-    write_velocity(all_games)
+    #write_velocity(all_games)
     #spacing_data = get_spacing_df(all_games)
-"""
+    velocity_data = extract_velocity(all_games)
+    velocity_plots(velocity_data)
+    fatigue_data = extract_fatigue(all_games)
+    fatigue_plots(farigue_data)
 
-######################
-# Begin Scratch Work #
-######################
 
-import pickle 
-import pandas as pd
-import seaborn as sns
-import matplotlib.pyplot as plt
-all_games = extract_games()
-first_game = all_games[0]
 
-velocity_data = pickle.load(open('data/velocity/12.22.2015-LAL-DEN.p', 'rb'))
-
-score_data =  pickle.load(open('data/score/12.22.2015-LAL-DEN.p', 'rb'))
 
 dat = analyze_velocity(all_games)
-df = pd.DataFrame(dat)
+
 home = df[[0, 2, 5, 7]]
 away = df[[1, 3, 4, 6]]
 home.columns = ['Off', 'Def', 'Pts', 'Tm']
@@ -439,6 +464,6 @@ for team in df2.Tm.unique():
 #Plots to publish
 ## Teams defensive velocity
 ## Teams offensive velocity
-## Fatigue: ATL offense, SAC offense, NOP Def, MIL Off, MEM Defense, HOU offense, IND offense
+## Fatigue: SAS Offense, IND Offense, MEM Defense
 
 
