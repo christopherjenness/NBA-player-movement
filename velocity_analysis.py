@@ -285,6 +285,57 @@ def analyze_velocity(gamelist):
                      away_score, home_score, away_team, home_team)
         data.append(game_data)
     return data
+    
+def analyze_fatigue(gamelist):
+    data = []
+    for game in gamelist:
+        away_team = game[2]
+        home_team = game[1]
+        print(away_team, home_team)
+        filename = "{date}-{away_team}-{home_team}".format(date=game[0], away_team=away_team, home_team=home_team)
+        
+        # Load velocity/score data
+        try:
+            velocity_data = pickle.load(open('data/velocity/' + filename + '.p', 'rb'))
+            score_data = pickle.load(open('data/score/' + filename + '.p', 'rb'))
+        except:
+            print ('velocity data not written for: ', game)
+            continue
+        
+        away_score, home_score = extract_scores(score_data)
+        # Organize velocity data by team and offense/defense 
+        HOV = pd.DataFrame(velocity_data[0])
+        HDV = pd.DataFrame(velocity_data[1])
+        AOV = pd.DataFrame(velocity_data[2])
+        ADV = pd.DataFrame(velocity_data[3])
+        
+        
+        # Cut out erroneous velocity data
+        # This is due to Frame-skipping in the SVU data
+        # For example, from the last frame of a quarter to the
+        # first frame of the next quarter, etc.
+        HOV = HOV[HOV[2] < 0.15]
+        AOV = AOV[AOV[2] < 0.15]
+        HDV = HDV[HDV[2] < 0.15]
+        ADV = ADV[ADV[2] < 0.15]
+        
+        quarter_velocities = {}
+        for quarter in [1, 2, 3, 4]:
+            ending_frame = int(len(HOV)/4 * quarter)
+            starting_frame = int(len(HOV)/4 * (quarter-1))
+
+            quarter_velocities[quarter] = [HOV.iloc[starting_frame:ending_frame][2].mean(),
+                                           HDV.iloc[starting_frame:ending_frame][2].mean(),
+                                           AOV.iloc[starting_frame:ending_frame][2].mean(),
+                                           ADV.iloc[starting_frame:ending_frame][2].mean(),
+                                           ]
+        df = pd.DataFrame(quarter_velocities)
+        df['Tm'] = [home_team, home_team, away_team, away_team]
+        df['Pos'] = ['Off', 'Def', 'Off', 'Def']
+        
+        game_data = (df, away_score, home_score, away_team, home_team)
+        data.append(game_data)
+    return data
         
 def extract_scores(score_data):
     """
@@ -369,55 +420,25 @@ plt.scatter(df[1], df[2])
 a = list(df[5])
 b = list(df[0])
 
-print(extract_scores(score_data))
+dat = analyze_fatigue(all_games)
+df = pd.DataFrame()
+for i in range(len(dat)):
+    df = pd.concat((df, dat[i][0]))
 
-HOV = pd.DataFrame(velocity_data[0])
-AOV = pd.DataFrame(velocity_data[2])
-HDV = pd.DataFrame(velocity_data[1])
-ADV = pd.DataFrame(velocity_data[3])
+df2 = pd.melt(df, ['Tm', 'Pos'], [1, 2, 3, 4])
 
-
-
-HOV = HOV[HOV[2] < 0.15]
-AOV = AOV[AOV[2] < 0.15]
-HDV = HDV[HDV[2] < 0.15]
-ADV = ADV[ADV[2] < 0.15]
-
-
-
-print(HOV.head())
-plt.figure()
-plt.hist(AOV[2], bins=100, alpha=0.5)
-plt.hist(ADV[2], bins=100, alpha=0.5)
-plt.title('AWAY')
-plt.show()
-
-plt.figure()
-plt.title('HOME')
-plt.hist(HOV[2], bins=100, alpha=0.5)
-plt.hist(HDV[2], bins=100, alpha=0.5)
-plt.show()
-
-
-print(HOV[2].mean())
-print(HDV[2].mean())
-print(AOV[2].mean())
-print(ADV[2].mean())
-
-print(HOV[2].std())
-print(HDV[2].std())
-print(AOV[2].std())
-print(ADV[2].std())
-
-HDV[3] = 'H'
-HOV[3] = 'O'
-
-HV = pd.concat((HDV, HOV))
-print('-------')
-print(HV.head())
-
-plt.figure()
-sns.violinplot(x=HV[3] , y=HV[2])
-plt.show()
+for team in df2.Tm.unique():
+    plt.figure()
+    sns.swarmplot(x='variable', y='value', data=df2[df2.Pos=='Off'][df2.Tm==team])
+    plt.title(team + 'off')
+    plt.show()
+    plt.figure()
+    sns.swarmplot(x='variable', y='value', data=df2[df2.Pos=='Def'][df2.Tm==team])
+    plt.title(team + 'def')
+    plt.show()
+#Plots to publish
+## Teams defensive velocity
+## Teams offensive velocity
+## Fatigue: ATL offense, SAC offense, NOP Def, MIL Off, MEM Defense, HOU offense, IND offense
 
 
