@@ -106,3 +106,26 @@ watch_play_velocities(game, game_time=7, length=54, highlight_player='Stephen Cu
 ```
 
 ![StephVelocity](examples/CurryVelocity.gif)
+
+Different teams have different offense/defensive scheme's that require different amounts of running.  When we break down velocity by team, we can look at how much effort each team's scheme takes.  (Note: I threw out all transition data, since I was interested in 'set' plays).
+
+
+![OffenseVelocity](examples/VelocityOffenseTeams.png)
+
+What we see makes sense- The Spurs have the most running incorporated into their offense.  The Spurs are known for their "flowing" offense, so this makes sense.  Interestingly, Houston has the slowest offense.  This is using data from the 2015-16 season.  It supports a number of claims at the time that Harden was out of shape this year.
+
+![DefenseVelocity](examples/VelocityDefenseTeams.png)
+
+Looking at defense is a bit more complicated.  Defensive velocity takes into account a number of things: closing out, switching, zoning, etc.  We will need to break these down to get real insight.
+
+One aspect of basketball that is currently hard to evaluate is player fatigue.  Tracking player velocity, we can see how it decreases over the course of a game as a metric for fatigue. 
+
+What we see is some teams, such as the Indiana Pacers decrease in offensive velocity as the game progresses (each dot is the average velocity of a single game).
+
+![INDfatigue](examples/INDfatige.png)
+
+Interestingly, while the Spurs have the highest offensive velocity in the league, they show no fatigue over the course of a game.  This reflects the known culture of the Spurs.
+
+![SASfatigue](examples/SASfatige.png)
+
+This will be more insightful when we break down fatigue by player, since different players are affected differentially. 
