@@ -283,10 +283,10 @@ def extract_velocity(gamelist):
         
         game_data = (HOV[2].mean(), AOV[2].mean(), HDV[2].mean(), ADV[2].mean(),
                      away_score, home_score, away_team, home_team)
-        data.append(pd.DataFrame(game_data))
-    return data
+        data.append(game_data)
+    return pd.DataFrame(data)
     
-def analyze_fatigue(gamelist):
+def extract_fatigue(gamelist):
     data = []
     for game in gamelist:
         away_team = game[2]
@@ -335,10 +335,22 @@ def analyze_fatigue(gamelist):
         
         game_data = (df, away_score, home_score, away_team, home_team)
         data.append(game_data)
-    return data
+    df = pd.DataFrame()
+    for i in range(len(data)):
+        df = pd.concat((df, data[i][0]))
+    df = pd.melt(df, ['Tm', 'Pos'], [1, 2, 3, 4])
+    return df
+    
+def set_plot_params(size):
+    SIZE = size
+    plt.rc('font', size=SIZE)  
+    plt.rc('axes', titlesize=SIZE)  
+    plt.rc('axes', labelsize=SIZE)  
+    plt.rc('xtick', labelsize=SIZE)  
+    plt.rc('ytick', labelsize=SIZE)
+    plt.rc('legend', fontsize=SIZE) 
     
 def velocity_plots(df):
-    
     #Organize velocity data
     home = df[[0, 2, 5, 7]]
     away = df[[1, 3, 4, 6]]
@@ -350,26 +362,48 @@ def velocity_plots(df):
     #Plot of offense velocity by team
     plt.figure()
     sns.barplot(x='Tm', y='Off', data=all_dat, order=ave.sort_values('Off').index, color= sns.xkcd_rgb["pale red"])
-    plt.ylim(0.02, 0.03)
+    plt.ylim(0.022, 0.03)
     locs, labels = plt.xticks()
     plt.setp(labels, rotation=90)
-    plt.ylabel('Mean Offensive Velocity')
+    locs,labels = plt.yticks()
+    plt.yticks(locs, map(lambda x: "%.1f" % x, locs*1000))
+    plt.ylabel('Mean Offensive Velocity \n (ft/sec)')
     plt.xlabel('')
+    plt.title('Offensive Velocity')
     plt.savefig('examples/VelocityOffenseTeams')
     
     #Plot of defense velocity by team
-    plt.figure
+    plt.figure()
     sns.barplot(x='Tm', y='Def', data=all_dat, order=ave.sort_values('Def').index, color= sns.xkcd_rgb["pale red"])
-    plt.ylim(0.016, 0.024)
+    plt.ylim(0.018, 0.024)
     locs, labels = plt.xticks()
     plt.setp(labels, rotation=90)
-    plt.ylabel('Mean Defensive Velocity')
+    locs,labels = plt.yticks()
+    plt.yticks(locs, map(lambda x: "%.1f" % x, locs*1000))
+    plt.ylabel('Mean Defensive Velocity \n (ft/sec)')
     plt.xlabel('')
+    plt.title('Defensive Velocity')
     plt.savefig('examples/VelocityDefenseTeams')
+
+def fatigue_plots(df):
+    plt.figure()
+    sns.swarmplot(x='variable', y='value', data=df[df.Pos=='Off'][df.Tm=='IND'])
+    plt.title('Indiana Pacers Fatigue')
+    plt.xlabel('Quarter')
+    plt.ylabel('Mean Offensive Velocity \n(ft/sec)')
+    plt.ylim(0.015, 0.034)
+    locs,labels = plt.yticks()
+    plt.yticks(locs, map(lambda x: "%.1f" % x, locs*1000))
+    plt.savefig('INDfatige')
     
-    plt.scatter(ave['Off'], ave['Def'])
-    plt.xlim(0.024, 0.028)
-    plt.ylim(0.02, 0.024)    
+    plt.figure()
+    sns.swarmplot(x='variable', y='value', data=df[df.Pos=='Off'][df.Tm=='SAS'])
+    plt.title('San Antonio Spurs Fatigue')
+    plt.xlabel('Quarter')
+    plt.ylabel('Mean Offensive Velocity \n(ft/sec)')
+    locs,labels = plt.yticks()
+    plt.yticks(locs, map(lambda x: "%.1f" % x, locs*1000))
+    plt.savefig('SASfatige')
         
 def extract_scores(score_data):
     """
@@ -391,13 +425,14 @@ def extract_scores(score_data):
 
 
 if __name__ == "__main__":
+    set_plot_params(22)
     all_games = extract_games()
     #write_velocity(all_games)
     #spacing_data = get_spacing_df(all_games)
     velocity_data = extract_velocity(all_games)
     velocity_plots(velocity_data)
     fatigue_data = extract_fatigue(all_games)
-    fatigue_plots(farigue_data)
+    fatigue_plots(fatigue_data)
 
 
 
