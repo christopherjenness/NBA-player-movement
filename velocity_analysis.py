@@ -394,7 +394,7 @@ def fatigue_plots(df):
     plt.ylim(0.015, 0.034)
     locs,labels = plt.yticks()
     plt.yticks(locs, map(lambda x: "%.1f" % x, locs*1000))
-    plt.savefig('INDfatige')
+    plt.savefig('examples/INDfatige')
     
     plt.figure()
     sns.swarmplot(x='variable', y='value', data=df[df.Pos=='Off'][df.Tm=='SAS'])
@@ -403,7 +403,7 @@ def fatigue_plots(df):
     plt.ylabel('Mean Offensive Velocity \n(ft/sec)')
     locs,labels = plt.yticks()
     plt.yticks(locs, map(lambda x: "%.1f" % x, locs*1000))
-    plt.savefig('SASfatige')
+    plt.savefig('examples/SASfatige')
         
 def extract_scores(score_data):
     """
