@@ -227,6 +227,8 @@ class Game(object):
 
     def watch_play(self, game_time, length, highlight_player=None, commentary=True, show_spacing=None):
         """
+        DEPRECIATED.  See animate_play() for similar (fastere) method
+
         Method for viewing plays in game.
         Outputs video file of play in {cwd}/temp
 
@@ -406,7 +408,9 @@ class Game(object):
         quarter = current_moment.quarter
         return (game_time, x_pos, y_pos, colors, sizes, quarter, shot_clock, game_clock, edges, universe_time)
 
-    def plot_frame(self, frame_number, highlight_player=None, commentary=True, show_spacing=False, pipe=None):
+    def plot_frame(self, frame_number, highlight_player=None,
+                   commentary=True, show_spacing=False,
+                   plot_spacing=False, pipe=None):
         """
         Creates an individual the frame of game.
         Outputs .png file in {cwd}/temp
