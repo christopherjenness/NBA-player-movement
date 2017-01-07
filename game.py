@@ -7,6 +7,7 @@ Library for retrieving basektball player-tracking and play-by-play data.
 # brew install ffmpeg --with-libvpx
 
 import os
+import sys
 import warnings
 import json
 import pandas as pd
@@ -20,7 +21,7 @@ from scipy.spatial import ConvexHull
 from subprocess import Popen, PIPE
 
 #Initialize Project
-os.chdir('/Users/christopherjenness/Desktop/Personal/SportVU/NBA-player-movement')
+os.chdir(sys.path[0])
 os.system('mkdir temp')
 
 class Game(object):
@@ -92,8 +93,8 @@ class Game(object):
         """
         # Retrive and extract Data into /temp folder
 
-        datalink = ("https://raw.githubusercontent.com/1wheel/BasketballData/master/"
-                    "2016.NBA.Raw.SportVU.Game.Logs/{self.tracking_id}.7z").format(self=self)
+        datalink = ("https://raw.githubusercontent.com/sealneaward/nba-movement-data/"
+                    "master/data/{self.tracking_id}.7z").format(self=self)
         print(datalink)
         os.system("curl {datalink} -o temp/zipdata".format(datalink=datalink))
         os.system("7za -o./temp x temp/zipdata")
@@ -246,7 +247,7 @@ class Game(object):
         Returns: an instance of self, and outputs video file of play
         """
         warnings.warn("watch_play is extremely slow.  Use animate_play for similar functionality, but greater efficiency")
-        
+
         if type(game_time) == tuple:
             starting_frame = game_time[0]
             ending_frame = game_time[1]
@@ -257,7 +258,7 @@ class Game(object):
 
         # Make video of each frame
         for frame in range(starting_frame, ending_frame):
-            self.plot_frame(frame, highlight_player=highlight_player, 
+            self.plot_frame(frame, highlight_player=highlight_player,
                             commentary=commentary, show_spacing=show_spacing)
         command = 'ffmpeg -framerate 20 -start_number {starting_frame} -i %d.png -c:v libx264 -r 30 -pix_fmt yuv420p -vf "scale=trunc(iw/2)*2:trunc(ih/2)*2" {starting_frame}.mp4'.format(starting_frame=starting_frame)
         os.chdir('temp')
@@ -330,10 +331,10 @@ class Game(object):
                 if count == commentary_length - 1:
                     break
         commentary_script = """{commentary[0]}
-                                \n{commentary[1]} 
-                                \n{commentary[2]} 
-                                \n{commentary[3]} 
-                                \n{commentary[4]} 
+                                \n{commentary[1]}
+                                \n{commentary[2]}
+                                \n{commentary[3]}
+                                \n{commentary[4]}
                                 \n{commentary[5]}
                                 """.format(commentary=commentary)
         return (commentary_script, score)
@@ -341,11 +342,11 @@ class Game(object):
     def _get_player_actions(self, player_name, action):
         """
         Helper function to get all times a player performed a specific action
-        
+
         Args:
             player_name (str): name of player to get all actions for
             action {'all_FG', 'made_FG', 'miss_FG', 'rebound'}: Type of action to get all times for.
-            
+
         Returns:
             times (list): list of game times a player performed a specific specific action
         """
@@ -471,7 +472,7 @@ class Game(object):
             string = fig.canvas.tostring_argb()
             pipe.stdin.write(string)
             plt.close()
-            if commentary: 
+            if commentary:
                 fig = plt.figure(figsize=(12, 6))
                 plt.figtext(.2, .4, commentary_script, size=20)
                 fig.canvas.draw()
@@ -484,7 +485,7 @@ class Game(object):
             plt.savefig('temp/{frame_number}.png'.format(frame_number=frame_number), bbox_inches='tight')
             plt.close()
         return self
-        
+
     def _in_formation(self, frame_number):
         """
         This is a complicated method to explain, but it is actually very simple.
@@ -580,19 +581,19 @@ class Game(object):
         if incorrect_count > correct_count:
             self.flip_direction = True
         return None
-    
+
     def get_frame(self, game_time):
         """
         Converts a game time to a frame number.  Useful all over the place.f
-        
+
         Args:
             game_time (int): game time in seconds of interest
-            
-        Returns: 
+
+        Returns:
             frame (int): frame number of game time
         """
         test_time = game_time
-        while True: 
+        while True:
             if test_time in self.moments.game_time.round():
                 frames = self.moments[self.moments.game_time.round() == test_time].index.values
                 if len(frames) > 0:
@@ -603,16 +604,16 @@ class Game(object):
             else:
                 test_time -= 1
         return frame
-        
+
     def get_play_frames(self, event_num, play_type='offense'):
         """
         Args:
             event_num (int): EVENTNUM of interest in games.pbp
                 NOTE: Check pbpevents.txt for event numbers
             play_type (str in ['offense', 'defense']): Team of interest is offense or defense
-        
+
         Returns:
-            tuple of (start_time (int), end_time (int)): start time and end time in seconds 
+            tuple of (start_time (int), end_time (int)): start time and end time in seconds
                 for play of interest
         """
         play_index = self.pbp[self.pbp['EVENTNUM']==event_num].index[0]
@@ -635,7 +636,7 @@ class Game(object):
         # Add two seconds to game time to let the players settle into position
         start_frame = self.get_frame(round(self.moments.ix[test_frame].game_time + 2))
         return (start_frame, end_frame)
-        
+
     def animate_play(self, game_time, length, highlight_player=None, commentary=True, show_spacing=None):
         """
         Method for animating plays in game.
@@ -650,7 +651,7 @@ class Game(object):
             length (int): length of play to watch (seconds)
             highlight_player (str): If not None, video will highlight the circle of
                 the inputed player for easy tracking.
-            commentary (bool): Whether to include play-by-play commentary in 
+            commentary (bool): Whether to include play-by-play commentary in
                 the animation
             show_spacing (str) in ['home', 'away']: show convex hull spacing of home or away
                 team.  If None, does not show spacing.
@@ -671,18 +672,18 @@ class Game(object):
             size = (960, 960)
         else:
             size = (960, 480)
-        cmdstring = ('ffmpeg', 
+        cmdstring = ('ffmpeg',
             '-y', '-r', '20', # 0fps
             '-s', '%dx%d' % size, # size of image string
             '-pix_fmt', 'argb', # Stream argb data from matplotlib
             '-f', 'rawvideo',  '-i', '-',
-            '-vcodec', 'libx264', filename) 
-        
+            '-vcodec', 'libx264', filename)
+
         #Stream plots to pipe
         pipe = Popen(cmdstring, stdin=PIPE)
         for frame in range(starting_frame, ending_frame):
-            self.plot_frame(frame, highlight_player=highlight_player, 
-                            commentary=commentary, show_spacing=show_spacing, 
+            self.plot_frame(frame, highlight_player=highlight_player,
+                            commentary=commentary, show_spacing=show_spacing,
                             pipe=pipe)
         pipe.stdin.close()
         pipe.wait()
