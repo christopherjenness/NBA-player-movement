@@ -124,7 +124,7 @@ What we see is some teams, such as the Indiana Pacers decrease in offensive velo
 
 ![INDfatigue](examples/INDfatige.png)
 
-Interestingly, while the Spurs have the highest offensive velocity in the league, they show no fatigue over the course of a game.  This reflects the known culture of the Spurs.
+Interestingly, while the Spurs have the highest offensive velocity in the league, they show no fatigue over the course of a game.  This reflects the speculated culture of the Spurs.
 
 ![SASfatigue](examples/SASfatige.png)
 
