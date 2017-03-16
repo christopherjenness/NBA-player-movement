@@ -21,7 +21,6 @@ from scipy.spatial import ConvexHull
 from subprocess import Popen, PIPE
 
 #Initialize Project
-os.chdir(sys.path[0])
 os.system('mkdir temp')
 
 class Game(object):
