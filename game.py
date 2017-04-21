@@ -20,7 +20,6 @@ from scipy.spatial import ConvexHull
 from subprocess import Popen, PIPE
 
 #Initialize Project
-os.chdir('/Users/christopherjenness/Desktop/Personal/SportVU/NBA-player-movement')
 os.system('mkdir temp')
 
 class Game(object):

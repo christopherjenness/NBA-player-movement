@@ -112,7 +112,7 @@ Different teams have different offense/defensive scheme's that require different
 
 ![OffenseVelocity](examples/VelocityOffenseTeams.png)
 
-What we see makes sense- The Spurs have the most running incorporated into their offense.  The Spurs are known for their "flowing" offense, so this makes sense.  Interestingly, Houston has the slowest offense.  This is using data from the 2015-16 season.  It supports a number of claims at the time that Harden was out of shape this year.
+What we see makes sense- The Spurs have the most running incorporated into their offense.  The Spurs are known for their "flowing" offense, so this makes sense.
 
 ![DefenseVelocity](examples/VelocityDefenseTeams.png)
 
@@ -124,7 +124,7 @@ What we see is some teams, such as the Indiana Pacers decrease in offensive velo
 
 ![INDfatigue](examples/INDfatige.png)
 
-Interestingly, while the Spurs have the highest offensive velocity in the league, they show no fatigue over the course of a game.  This reflects the known culture of the Spurs.
+Interestingly, while the Spurs have the highest offensive velocity in the league, they show no fatigue over the course of a game.  This reflects the speculated culture of the Spurs.
 
 ![SASfatigue](examples/SASfatige.png)
 
