@@ -4,7 +4,13 @@ This library contains useful methods for visualizing and analyzing NBA player tr
 
 The data is located here and contains all player and ball locations for NBA games from the 2015-16 season.  Play-by-play data is obtained from nba.stats.com.
 
+## TODO
+* Long term solution for play-by-play data.  This may break at any moment.  [See here](https://github.com/christopherjenness/NBA-player-movement/issues/5)
+* Python 3 support.  [See here](https://github.com/christopherjenness/NBA-player-movement/issues/4)
+
 ## Visualization
+Note, these examples use watch_play() to visualize plays.  This method is extremely slow.  animate_play() is much faster since it streams frames directly to ffmpeg without writing them to disk first.
+
 To visualize games from the tracking data, the `Game` class in `game.py` is used.
 ```python
 from game import Game
