@@ -7,7 +7,6 @@ Library for retrieving basektball player-tracking and play-by-play data.
 # brew install ffmpeg --with-libvpx
 
 import os
-import sys
 import warnings
 import json
 import pandas as pd
@@ -21,7 +20,7 @@ from scipy.spatial import ConvexHull
 from subprocess import Popen, PIPE
 
 #Initialize Project
-os.chdir(sys.path[0])
+os.chdir('/Users/christopherjenness/Desktop/Personal/SportVU/NBA-player-movement')
 os.system('mkdir temp')
 
 class Game(object):
@@ -93,8 +92,8 @@ class Game(object):
         """
         # Retrive and extract Data into /temp folder
 
-        datalink = ("https://raw.githubusercontent.com/sealneaward/nba-movement-data/"
-                    "master/data/{self.tracking_id}.7z").format(self=self)
+        datalink = ("https://raw.githubusercontent.com/1wheel/BasketballData/master/"
+                    "2016.NBA.Raw.SportVU.Game.Logs/{self.tracking_id}.7z").format(self=self)
         print(datalink)
         os.system("curl {datalink} -o temp/zipdata".format(datalink=datalink))
         os.system("7za -o./temp x temp/zipdata")
@@ -118,7 +117,7 @@ class Game(object):
         This service is likely to go down at any moment and ruin this whole project.
         """
         # stats.nba.com API call
-        os.system('curl "http://stats.nba.com/stats/playbyplayv2?'
+        link = ('http://stats.nba.com/stats/playbyplayv2?'
                   'EndPeriod=0&'
                   'EndRange=0&'
                   'GameID={self.game_id}&'
@@ -126,8 +125,12 @@ class Game(object):
                   'Season=2015-16&'
                   'SeasonType=Season&'
                   'StartPeriod=0&'
-                  'StartRange=0" > {cwd}/temp/pbp_{self.game_id}.json'.format(cwd=os.getcwd(), self=self))
-
+                  'StartRange=0').format(self=self)
+        print(link)
+        
+        curl_request = "curl -H 'Host: stats.nba.com' -H 'Cache-Control: max-age=0' -H 'Upgrade-Insecure-Requests: 1' -H 'User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/57.0.2987.133 Safari/537.36' -H 'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8' -H 'Accept-Language: en-US,en;q=0.8' -H 'Cookie: optimizelyEndUserId=oeu1459126648587r0.9085280735277621; __gads=ID=964471d670dac779:T=1460869857:S=ALNI_MbJLSD4w2tPlsOhKDqEAg-hJLFHdw; _ym_uid=1463691999367454886; __qca=P0-289326345-1467379855443; __insp_ref=aHR0cHM6Ly93d3cucmVkZGl0LmNvbS8%3D; tk_ni=24305475; TSid=Gaa4185a-1193725393-1390264571823-1; authid=1507455962-usr-b5a4a5170d5a8be1936491d60daa3d3a; umbel_browser_id=5b7616bc-4431-4434-baf2-4d3cfa2b9876; globalUserOrderId=Id=; bSID=Id=59640b86-a51a-4e1f-b7ec-a399d5b07238; mmapi.store.p.0=%7B%22mmparams.d%22%3A%7B%7D%2C%22mmparams.p%22%3A%7B%22mmid%22%3A%221509847760933%7C%5C%22-1810761698%7CGwAAAAoTkJnfDA4AAA%3D%3D%5C%22%22%2C%22pd%22%3A%221509847760939%7C%5C%22-1212554282%7CGwAAAAoBQhOQmd8MDiRZ%2Fy0BAA4zh8EgBdRIDwAAAOIa9tUfBdRIAAAAAAEAAAD%2F%2F%2F%2F%2FAA53d3cuZ29vZ2xlLmNvbQQMDgEAAAAAAAAAAAAA7iEAAO4hAADuIQAAAgB5SAAAALy3XVkMDgD%2F%2F%2F%2F%2FAQwODA7%2F%2FxQAAAEAAAAAAd6xAADOGQEAAPhTAAAAldsNCQwOAP%2F%2F%2F%2F8BDA4MDv%2F%2FFAAAAQAAAAAB98sAAAFEAQAAAAAAAUU%3D%5C%22%22%2C%22srv%22%3A%221509847760945%7C%5C%22nycvwcgus08%5C%22%22%7D%7D; s_pers=%20s_last_team%3DPortland%2520Trail%2520Blazers%7C1509847761397%3B%20productnum%3D26%7C1480903761406%3B; rr_rcs=eF4FwbkNgDAQBMDEEb2stHe-jw5oA9kgEZAB9TPT2ju2g6X7mAPGStgeJ9jdEeFBS3LVvtzfc02KREEsq4tkqCtRBOQHf1cQwg; octowebstatid=1xczdobnwe88u5d2plxp; AMCV_7FF852E2556756057F000101%40AdobeOrg=817868104%7CMCAID%7C2B7C40BD0519342E-6000060BC00265B9%7CMCIDTS%7C17179%7CMCMID%7C24999714812537295540268688125428820227%7CMCAAMLH-1484315402%7C7%7CMCAAMB-1484864571%7CNRX38WO0n5BH8Th-nqAG_A%7CMCOPTOUT-1484266971s%7CNONE; trwv.uid=trailblazers-1487163606011-464e9ee5%3A1; _vwo_uuid_v2=DA4D1FCEA6E5D568588922B364BC1CF0|93607b42520b5c2548a8c8933882cfbd; __insp_wid=1563652280; __insp_slim=1487163608581; __insp_nv=true; __insp_targlpu=http%3A%2F%2Fwww.nba.com%2Fblazers%2Fforwardcenter%2Ftrail-blazers-start-process-getting-know-nurkic; __insp_targlpt=Trail%20Blazers%20Start%20The%20Process%20Of%20Getting%20To%20Know%20Nurkic%20%7C%20Portland%20Trail%20Blazers; __insp_norec_sess=true; LPVID=k3MzcyY2VjNzdjOTNhZWMy; optimizelySegments=%7B%221856490740%22%3A%22gc%22%2C%221871620897%22%3A%22none%22%2C%221872590752%22%3A%22false%22%2C%221873520688%22%3A%22search%22%2C%222011250403%22%3A%22true%22%2C%222340150412%22%3A%22true%22%2C%222706020152%22%3A%22false%22%2C%222717810225%22%3A%22none%22%2C%222718550206%22%3A%22false%22%2C%222719510233%22%3A%22gc%22%2C%222721320256%22%3A%22referral%22%2C%222723730053%22%3A%22referral%22%2C%222727730008%22%3A%22gc%22%2C%222729180004%22%3A%22none%22%2C%224998950102%22%3A%22true%22%7D; optimizelyBuckets=%7B%7D; _mkto_trk=id:701-VUL-688&token:_mch-nba.com-1463691998355-38768; _ga=GA1.2.1501074068.1459887885; s_vi=[CS]v1|2B7C40BD0519342E-6000060BC00265B9[CE]; s_fid=1CBCCC013B3486BC-352882DDD6EB7C13; s_cc=true; personalize=%7B%7D; nbaMembershipInfo=%7B%22tid%22%3A%22aa4185a-1193725393-1390264571823-1%22%2C%22email%22%3A%22christopherjenness@gmail.com%22%2C%22firstName%22%3A%22Christopher%22%2C%22entitlements%22%3A%5B%22lpbc%22%2C%22lprdo%22%5D%2C%22identityType%22%3A%22EMAIL%22%2C%22teams%22%3A%5B%22POR%22%5D%7D; s_sq=nbag-n-league%252Cnbag-n-league-all-platforms%3D%2526pid%253Dnba%25253Agames%25253A20170419%25253APORGSW%2526pidt%253D1%2526oid%253DPOR%2526oidt%253D3%2526ot%253DSUBMIT; ug=56f881790154310a3c71ba1c0a03f7f8; ugs=1' --compressed '{link}' > {cwd}/temp/pbp_{self.game_id}.json".format(cwd=os.getcwd(), self=self, link=link)
+        print(curl_request)
+        os.system(curl_request)
         # load play by play into pandas DataFrame
         with open("{cwd}/temp/pbp_{self.game_id}.json".format(cwd=os.getcwd(), self=self)) as json_file:
             parsed = json.load(json_file)['resultSets'][0]
@@ -247,7 +250,7 @@ class Game(object):
         Returns: an instance of self, and outputs video file of play
         """
         warnings.warn("watch_play is extremely slow.  Use animate_play for similar functionality, but greater efficiency")
-
+        
         if type(game_time) == tuple:
             starting_frame = game_time[0]
             ending_frame = game_time[1]
@@ -258,7 +261,7 @@ class Game(object):
 
         # Make video of each frame
         for frame in range(starting_frame, ending_frame):
-            self.plot_frame(frame, highlight_player=highlight_player,
+            self.plot_frame(frame, highlight_player=highlight_player, 
                             commentary=commentary, show_spacing=show_spacing)
         command = 'ffmpeg -framerate 20 -start_number {starting_frame} -i %d.png -c:v libx264 -r 30 -pix_fmt yuv420p -vf "scale=trunc(iw/2)*2:trunc(ih/2)*2" {starting_frame}.mp4'.format(starting_frame=starting_frame)
         os.chdir('temp')
@@ -331,10 +334,10 @@ class Game(object):
                 if count == commentary_length - 1:
                     break
         commentary_script = """{commentary[0]}
-                                \n{commentary[1]}
-                                \n{commentary[2]}
-                                \n{commentary[3]}
-                                \n{commentary[4]}
+                                \n{commentary[1]} 
+                                \n{commentary[2]} 
+                                \n{commentary[3]} 
+                                \n{commentary[4]} 
                                 \n{commentary[5]}
                                 """.format(commentary=commentary)
         return (commentary_script, score)
@@ -342,11 +345,11 @@ class Game(object):
     def _get_player_actions(self, player_name, action):
         """
         Helper function to get all times a player performed a specific action
-
+        
         Args:
             player_name (str): name of player to get all actions for
             action {'all_FG', 'made_FG', 'miss_FG', 'rebound'}: Type of action to get all times for.
-
+            
         Returns:
             times (list): list of game times a player performed a specific specific action
         """
@@ -472,7 +475,7 @@ class Game(object):
             string = fig.canvas.tostring_argb()
             pipe.stdin.write(string)
             plt.close()
-            if commentary:
+            if commentary: 
                 fig = plt.figure(figsize=(12, 6))
                 plt.figtext(.2, .4, commentary_script, size=20)
                 fig.canvas.draw()
@@ -485,7 +488,7 @@ class Game(object):
             plt.savefig('temp/{frame_number}.png'.format(frame_number=frame_number), bbox_inches='tight')
             plt.close()
         return self
-
+        
     def _in_formation(self, frame_number):
         """
         This is a complicated method to explain, but it is actually very simple.
@@ -581,19 +584,19 @@ class Game(object):
         if incorrect_count > correct_count:
             self.flip_direction = True
         return None
-
+    
     def get_frame(self, game_time):
         """
         Converts a game time to a frame number.  Useful all over the place.f
-
+        
         Args:
             game_time (int): game time in seconds of interest
-
-        Returns:
+            
+        Returns: 
             frame (int): frame number of game time
         """
         test_time = game_time
-        while True:
+        while True: 
             if test_time in self.moments.game_time.round():
                 frames = self.moments[self.moments.game_time.round() == test_time].index.values
                 if len(frames) > 0:
@@ -604,16 +607,16 @@ class Game(object):
             else:
                 test_time -= 1
         return frame
-
+        
     def get_play_frames(self, event_num, play_type='offense'):
         """
         Args:
             event_num (int): EVENTNUM of interest in games.pbp
                 NOTE: Check pbpevents.txt for event numbers
             play_type (str in ['offense', 'defense']): Team of interest is offense or defense
-
+        
         Returns:
-            tuple of (start_time (int), end_time (int)): start time and end time in seconds
+            tuple of (start_time (int), end_time (int)): start time and end time in seconds 
                 for play of interest
         """
         play_index = self.pbp[self.pbp['EVENTNUM']==event_num].index[0]
@@ -636,7 +639,7 @@ class Game(object):
         # Add two seconds to game time to let the players settle into position
         start_frame = self.get_frame(round(self.moments.ix[test_frame].game_time + 2))
         return (start_frame, end_frame)
-
+        
     def animate_play(self, game_time, length, highlight_player=None, commentary=True, show_spacing=None):
         """
         Method for animating plays in game.
@@ -651,7 +654,7 @@ class Game(object):
             length (int): length of play to watch (seconds)
             highlight_player (str): If not None, video will highlight the circle of
                 the inputed player for easy tracking.
-            commentary (bool): Whether to include play-by-play commentary in
+            commentary (bool): Whether to include play-by-play commentary in 
                 the animation
             show_spacing (str) in ['home', 'away']: show convex hull spacing of home or away
                 team.  If None, does not show spacing.
@@ -672,18 +675,18 @@ class Game(object):
             size = (960, 960)
         else:
             size = (960, 480)
-        cmdstring = ('ffmpeg',
+        cmdstring = ('ffmpeg', 
             '-y', '-r', '20', # 0fps
             '-s', '%dx%d' % size, # size of image string
             '-pix_fmt', 'argb', # Stream argb data from matplotlib
             '-f', 'rawvideo',  '-i', '-',
-            '-vcodec', 'libx264', filename)
-
+            '-vcodec', 'libx264', filename) 
+        
         #Stream plots to pipe
         pipe = Popen(cmdstring, stdin=PIPE)
         for frame in range(starting_frame, ending_frame):
-            self.plot_frame(frame, highlight_player=highlight_player,
-                            commentary=commentary, show_spacing=show_spacing,
+            self.plot_frame(frame, highlight_player=highlight_player, 
+                            commentary=commentary, show_spacing=show_spacing, 
                             pipe=pipe)
         pipe.stdin.close()
         pipe.wait()
