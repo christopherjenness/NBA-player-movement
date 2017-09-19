@@ -90,10 +90,7 @@ class Game(object):
         Tracking Data is provided by NBA.com, hosted at: https://www.github.com/neilmj
         """
         # Retrive and extract Data into /temp folder
-
-        datalink = ("https://raw.githubusercontent.com/1wheel/BasketballData/master/"
-                    "2016.NBA.Raw.SportVU.Game.Logs/{self.tracking_id}.7z").format(self=self)
-        print(datalink)
+        
         os.system("curl {datalink} -o temp/zipdata".format(datalink=datalink))
         os.system("7za -o./temp x temp/zipdata")
         os.remove("./temp/zipdata")
