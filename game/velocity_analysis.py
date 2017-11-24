@@ -148,8 +148,8 @@ def watch_play_velocities(game, game_time, length, highlight_player=None):
             the inputed player for easy tracking, and also display that
             players velocity
 
-    Returns: an instance of self, and outputs video file of play with
-        velocity plot see README.md for example
+    Returns: None and outputs video file of play with
+        velocity plot. See README.md for example
     """
     starting_frames = game.moments[game.moments.game_time.round() ==
                                    game_time]
