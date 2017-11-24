@@ -2,9 +2,6 @@
 Library for retrieving basektball player-tracking and play-by-play data.
 """
 
-# brew install p7zip
-# brew install curl
-# brew install ffmpeg --with-libvpx
 import matplotlib
 matplotlib.use('TkAgg')
 
