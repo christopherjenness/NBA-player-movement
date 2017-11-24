@@ -1,5 +1,7 @@
 """
-Scripts for analyzing spacing of NBA tracking data
+Scripts for analyzing spacing of NBA tracking data.
+
+The workhorse statistic for spacing is "Convex Hull"
 """
 
 import os
