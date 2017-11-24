@@ -4,6 +4,13 @@ This library contains useful methods for visualizing and analyzing NBA player tr
 
 The data is located here and contains all player and ball locations for NBA games from the 2015-16 season.  Play-by-play data is obtained from nba.stats.com.
 
+Example visualizations are shown below.
+
+## System Requirements
+* `curl`
+* `ffmpeg`
+* `p7zip`
+
 ## TODO
 * Long term solution for play-by-play data.  This may break at any moment.  [See here](https://github.com/christopherjenness/NBA-player-movement/issues/5)
 * Python 3 support.  [See here](https://github.com/christopherjenness/NBA-player-movement/issues/4)
