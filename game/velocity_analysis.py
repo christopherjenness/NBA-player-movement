@@ -64,10 +64,10 @@ def calculate_velocities(game, frame, highlight_player=None):
         else:
             highlight_player = None
 
-            if frame == 0:
-                if highlight_player:
-                    return 0
-                return (game_time, 0, 0)
+    if frame == 0:
+        if highlight_player:
+            return 0
+        return (game_time, 0, 0)
 
     # If not all the players are on the court, there is an error in the data
     if len(details[1]) != 11 or \
